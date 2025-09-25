@@ -1,0 +1,7 @@
+{
+  "name": "Sike's AI Assistant for School",
+  "description": "An AI assistant and tutor by Sikandar Ali (Sike Ali) for Class X Sindh Board students, offering multilingual support in English, Sindhi, and Urdu across multiple subjects.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

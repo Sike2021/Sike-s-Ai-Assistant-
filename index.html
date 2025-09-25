@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sike's Tutor Center – Sikandar Ali Malik</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;700&family=Noto+Sans+Sindhi:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.1.1/client",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "recharts": "https://aistudiocdn.com/recharts@^2.13.0/es6/index.js",
+    "prop-types": "https://aistudiocdn.com/prop-types@^15.8.1"
+  }
+}
+</script>
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  .font-urdu {
+    font-family: 'Noto Naskh Arabic', sans-serif;
+  }
+  .font-sindhi {
+    font-family: 'Noto Sans Sindhi', sans-serif;
+  }
+  /* Custom scrollbar for dropdown and chat */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569; /* slate-600 */
+    border-radius: 3px;
+  }
+  html.light .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #d1d5db; /* gray-300 */
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #64748b; /* slate-500 */
+  }
+  html.light .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af; /* gray-400 */
+  }
+  
+  /* Hide scrollbar but allow scrolling */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Style for markdown content */
+  /* Light Mode */
+  .prose { color: #374151; }
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { color: #111827; }
+  .prose p { margin-bottom: 1em; line-height: 1.6; }
+  .prose a { color: #0891b2; text-decoration: none; font-weight: 500;}
+  .prose a:hover { text-decoration: underline; }
+  .prose strong { color: #000; }
+  .prose ol { list-style-type: decimal; }
+  .prose ul { list-style-type: disc; }
+  .prose ol, .prose ul { padding-left: 1.5rem; margin-bottom: 1em; }
+  .prose li::marker { color: #9ca3af; }
+  .prose blockquote { border-left: 3px solid #d1d5db; padding-left: 1rem; margin-left: 0; color: #6b7280; font-style: italic; }
+  .prose code { background-color: #f3f4f6; color: #1f2937; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
+  .prose pre { background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+  .prose pre code { padding: 0; background-color: transparent; border: none; }
+
+  /* Dark Mode */
+  .dark .prose { color: #cbd5e1; }
+  .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 { color: #f1f5f9; }
+  .dark .prose a { color: #22d3ee; }
+  .dark .prose strong { color: #f8fafc; }
+  .dark .prose li::marker { color: #64748b; }
+  .dark .prose blockquote { border-left: 3px solid #475569; color: #94a3b8; }
+  .dark .prose code { background-color: #0f172a; color: #e2e8f0; }
+  .dark .prose pre { background-color: #020617; border: 1px solid #1e293b; }
+</style>
+</head>
+  <body class="bg-white dark:bg-slate-900 text-gray-900 dark:text-white antialiased">
+    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-900/20 z-0 hidden dark:block"></div>
+    <div id="root" class="relative z-10"></div>
+    <!-- The development environment will automatically inject the compiled index.tsx here -->
+  </body>
+</html>

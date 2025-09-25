@@ -1,0 +1,21 @@
+{
+  "name": "Sike's Tutor Center",
+  "short_name": "Sike's Tutor",
+  "description": "An AI tutor by Sikandar Ali (Sike Ali) for Class X Sindh Board students, offering multilingual support.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/sike_tutor_192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/sike_tutor_512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
