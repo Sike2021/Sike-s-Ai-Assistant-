@@ -4,7 +4,7 @@ import { Icons } from './Icons';
 import { Dropdown, CameraModal, LoadingSpinner } from './Shared';
 import { ChatMessage } from './Chat';
 import { Message, Conversation, PageProps, UserProfile } from '../types';
-import { streamAIChatResponse, generateConversationTitle } from '../services/geminiService';
+import { streamAIChatResponse, generateConversationTitle } from './services/geminiService';
 import { getConversationsKey, SIKE_USERS_KEY } from '../utils/appUtils';
 
 const chatModes = ['General', 'Technical', 'Creative', 'Academic', 'Linguistic'];
@@ -66,9 +66,12 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
         });
 
         const history = currentMessages;
-        const currentInput = input; setInput(''); setAttachedImages([]); setIsLoading(true);
+        const currentInput = input;
+        const currentImages = [...attachedImages];
+        setInput(''); setAttachedImages([]); setIsLoading(true);
         try {
-            const stream = streamAIChatResponse(currentInput, history, attachedImages, currentUserEmail, userProfileNotes, chatMode, userName);
+            // Updated call signature: prompt, history, language, images, userEmail, userProfileNotes, chatMode, userName
+            const stream = streamAIChatResponse(currentInput, history, 'English', currentImages, currentUserEmail, userProfileNotes, chatMode, userName);
             let acc = "";
             for await (const chunk of stream) {
                 if (chunk.text) acc += chunk.text;
