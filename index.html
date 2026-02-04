@@ -1,16 +1,19 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sike's Tutor Center – Sikandar Ali Malik</title>
+    <title>SigNify – Giving meaning to knowledge</title>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0f172a" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;700&family=Noto+Sans+Sindhi:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;700&family=Noto+Sans+Sindhi:wght@400;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script type="importmap">
 {
   "imports": {
@@ -20,81 +23,94 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
     "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "recharts": "https://aistudiocdn.com/recharts@^2.13.0/es6/index.js",
-    "prop-types": "https://aistudiocdn.com/prop-types@^15.8.1"
+    "prop-types": "https://aistudiocdn.com/prop-types@^15.8.1",
+    "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"
   }
 }
 </script>
 <style>
   body {
     font-family: 'Inter', sans-serif;
+    overflow: hidden;
   }
   .font-urdu {
     font-family: 'Noto Naskh Arabic', sans-serif;
+    line-height: 2.2;
+    font-size: 1.15rem;
   }
   .font-sindhi {
     font-family: 'Noto Sans Sindhi', sans-serif;
+    line-height: 2.2;
+    font-size: 1.15rem;
   }
-  /* Custom scrollbar for dropdown and chat */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #475569; /* slate-600 */
-    border-radius: 3px;
-  }
-  html.light .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #d1d5db; /* gray-300 */
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #64748b; /* slate-500 */
-  }
-  html.light .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af; /* gray-400 */
+  .font-commander {
+    font-family: 'Orbitron', sans-serif;
   }
   
-  /* Hide scrollbar but allow scrolling */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
+  /* Stylish Scrollbars */
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #0891b2; border-radius: 10px; }
 
-  /* Style for markdown content */
-  /* Light Mode */
-  .prose { color: #374151; }
-  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { color: #111827; }
-  .prose p { margin-bottom: 1em; line-height: 1.6; }
-  .prose a { color: #0891b2; text-decoration: none; font-weight: 500;}
-  .prose a:hover { text-decoration: underline; }
-  .prose strong { color: #000; }
-  .prose ol { list-style-type: decimal; }
-  .prose ul { list-style-type: disc; }
-  .prose ol, .prose ul { padding-left: 1.5rem; margin-bottom: 1em; }
-  .prose li::marker { color: #9ca3af; }
-  .prose blockquote { border-left: 3px solid #d1d5db; padding-left: 1rem; margin-left: 0; color: #6b7280; font-style: italic; }
-  .prose code { background-color: #f3f4f6; color: #1f2937; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
-  .prose pre { background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 8px; overflow-x: auto; }
-  .prose pre code { padding: 0; background-color: transparent; border: none; }
-
-  /* Dark Mode */
+  /* Markdown Typography Overhaul */
+  .prose { max-width: none; color: #334155; }
   .dark .prose { color: #cbd5e1; }
-  .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 { color: #f1f5f9; }
-  .dark .prose a { color: #22d3ee; }
-  .dark .prose strong { color: #f8fafc; }
-  .dark .prose li::marker { color: #64748b; }
-  .dark .prose blockquote { border-left: 3px solid #475569; color: #94a3b8; }
-  .dark .prose code { background-color: #0f172a; color: #e2e8f0; }
-  .dark .prose pre { background-color: #020617; border: 1px solid #1e293b; }
+  .prose h1, .prose h2, .prose h3 { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: -0.02em; margin-top: 1.5em; margin-bottom: 0.5em; color: #0f172a; }
+  .dark .prose h1, .dark .prose h2, .dark .prose h3 { color: #f8fafc; }
+  .prose p { margin-bottom: 1.2em; line-height: 1.7; }
+  .prose code { background: #f1f5f9; padding: 0.2rem 0.4rem; rounded: 6px; font-size: 0.9em; color: #0891b2; }
+  .dark .prose code { background: #0f172a; color: #22d3ee; }
+  .prose pre { background: #020617 !important; border: 1px solid #1e293b; border-radius: 16px; padding: 1.25rem; }
+
+  /* Jelly Animation & Loader */
+  .sig-jelly-container {
+    --uib-size: 60px;
+    --uib-color: #0891b2;
+    --uib-speed: 1.75s;
+    position: relative;
+    height: var(--uib-size);
+    width: var(--uib-size);
+    filter: url('#uib-jelly-triangle-ooze');
+  }
+  .dark .sig-jelly-container { --uib-color: #22d3ee; }
+  .sig-jelly-dot, .sig-jelly-container::before, .sig-jelly-container::after {
+    content: ''; position: absolute; width: 33%; height: 33%; background-color: var(--uib-color); border-radius: 100%; will-change: transform; transition: background-color 0.3s ease;
+  }
+  .sig-jelly-dot { top: 6%; left: 30%; animation: sig-grow var(--uib-speed) ease infinite; }
+  .sig-jelly-container::before { bottom: 6%; right: 0; animation: sig-grow var(--uib-speed) ease calc(var(--uib-speed) * -0.666) infinite; }
+  .sig-jelly-container::after { bottom: 6%; left: 0; animation: sig-grow var(--uib-speed) ease calc(var(--uib-speed) * -0.333) infinite; }
+  .sig-jelly-traveler { position: absolute; top: 6%; left: 30%; width: 33%; height: 33%; background-color: var(--uib-color); border-radius: 100%; animation: sig-triangulate var(--uib-speed) ease infinite; }
+
+  @keyframes sig-triangulate {
+    0%, 100% { transform: none; }
+    33.333% { transform: translate(120%, 175%); }
+    66.666% { transform: translate(-95%, 175%); }
+  }
+  @keyframes sig-grow {
+    0%, 85%, 100% { transform: scale(1.5); }
+    50%, 60% { transform: scale(0); }
+  }
+
+  /* Commander Overrides */
+  .commander-mode {
+    --cm-bg: #020617;
+    --cm-primary: #22d3ee;
+    --cm-primary-glow: rgba(34, 211, 238, 0.1);
+  }
+  .commander-mode body { background-color: var(--cm-bg) !important; }
 </style>
 </head>
-  <body class="bg-white dark:bg-slate-900 text-gray-900 dark:text-white antialiased">
-    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-900/20 z-0 hidden dark:block"></div>
+  <body class="bg-slate-50 dark:bg-slate-900 text-gray-900 dark:text-white antialiased">
+    <svg width="0" height="0" style="position: absolute;">
+      <defs>
+        <filter id="uib-jelly-triangle-ooze">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3.333" result="blur" />
+          <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="ooze" />
+          <feBlend in="SourceGraphic" in2="ooze" />
+        </filter>
+      </defs>
+    </svg>
+    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-100 via-white to-cyan-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/20 z-0"></div>
     <div id="root" class="relative z-10"></div>
-    <!-- The development environment will automatically inject the compiled index.tsx here -->
   </body>
 </html>

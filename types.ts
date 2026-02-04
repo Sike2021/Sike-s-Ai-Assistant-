@@ -1,12 +1,32 @@
 
-// FIX: Define types for the application to ensure type safety.
 export interface Message {
   id: string;
   text: string;
   sender: 'user' | 'bot';
   sources?: Source[];
-  imageUrl?: string;
+  imageUrls?: string[];
   imageIsLoading?: boolean;
+}
+
+export interface NotebookSource {
+    id: string;
+    name: string;
+    content: string;
+    size: number;
+    type: string;
+}
+
+export interface VaultFile extends NotebookSource {
+    uploadedAt: number;
+    summary?: string;
+    tasks?: VaultTask[];
+}
+
+export interface VaultTask {
+    id: string;
+    text: string;
+    status: 'pending' | 'completed' | 'in-progress';
+    priority: 'low' | 'medium' | 'high';
 }
 
 export interface Conversation {
@@ -16,8 +36,18 @@ export interface Conversation {
   lastUpdated: number;
 }
 
+export type SubscriptionTier = 'free' | 'study' | 'pro';
+
 export interface UserProfile {
-  notes: string;
+  name: string;
+  email: string;
+  picture?: string; // From Google Sign-In
+  notes?: string;
+  lastActive?: number;
+  subscription?: {
+    tier: SubscriptionTier;
+    expiry: number; // Timestamp
+  };
 }
 
 export interface Source {
@@ -96,4 +126,10 @@ export interface InProgressExamSession {
     language: string[];
     duration: number;
   };
+}
+
+export interface PageProps {
+    isOnline: boolean;
+    currentUserEmail?: string | null;
+    userProfileNotes?: string;
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sike-tutor-cache-v1';
+const CACHE_NAME = 'signify-cache-v1';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',

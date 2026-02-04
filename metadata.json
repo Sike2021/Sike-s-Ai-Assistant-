@@ -1,7 +1,8 @@
 {
-  "name": "Sike's AI Assistant for School",
-  "description": "An AI assistant and tutor by Sikandar Ali (Sike Ali) for Class X Sindh Board students, offering multilingual support in English, Sindhi, and Urdu across multiple subjects.",
+  "name": "SigNify",
+  "description": "SigNify: An AI that gives meaning to knowledge. Your personal AI companion for learning and creativity, designed by Sikandar.",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera"
   ]
 }

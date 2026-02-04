@@ -1,19 +1,19 @@
 {
-  "name": "Sike's Tutor Center",
-  "short_name": "Sike's Tutor",
-  "description": "An AI tutor by Sikandar Ali (Sike Ali) for Class X Sindh Board students, offering multilingual support.",
+  "name": "SigNify – Giving meaning to knowledge",
+  "short_name": "SigNify",
+  "description": "SigNify: An AI that gives meaning to knowledge. Your personal AI companion for learning and creativity, designed by Sikandar.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/sike_tutor_192/192",
+      "src": "https://picsum.photos/seed/signify_192/192",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://picsum.photos/seed/sike_tutor_512/512",
+      "src": "https://picsum.photos/seed/signify_512/512",
       "sizes": "512x512",
       "type": "image/png"
     }
