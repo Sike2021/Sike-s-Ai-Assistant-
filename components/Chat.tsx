@@ -4,7 +4,7 @@ import { Icons } from './Icons';
 import { CopyButton, SourceBubble, Dropdown, CameraModal, LoadingSpinner } from './Shared';
 import { Message, Source, VaultFile } from '../types';
 import { chunkText, getSavedMessagesKey, createWavBlob } from '../utils/appUtils';
-import { generateGeminiTTS, saveToLinguisticMemory } from './services/geminiService';
+import { generateGeminiTTS, saveToLinguisticMemory } from '../services/geminiService';
 
 /** Audio Decoding Utilities */
 function decode(base64: string) {
@@ -234,7 +234,6 @@ export const ChatComponent: React.FC<{
         setInput(''); setAttachedImages([]); setIsLoading(true);
 
         try {
-            // Standardized call signature: prompt, history, language, images, userEmail, userProfileNotes
             const stream = aiStreamFunction(currentInput, messages, language, currentImages, currentUserEmail, userProfileNotes);
             let fullText = '';
             for await (const chunk of stream) {
