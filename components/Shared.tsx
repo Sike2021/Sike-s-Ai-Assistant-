@@ -54,20 +54,31 @@ export const SplashScreen: React.FC = () => {
                 </div>
                 {revealCount >= initials.length && (
                     <div className="animate-in fade-in zoom-in duration-1000">
-                        <LoadingSpinner label="Initializing Reader 3.2" />
+                        <LoadingSpinner label="Initializing Reader 2.1" />
                     </div>
                 )}
             </div>
             <div className="absolute bottom-12 text-center z-10">
-                <p className="text-cyan-400/30 font-commander text-[9px] font-bold tracking-[0.5em] uppercase">Vercel Edge Proxy • Active</p>
+                <p className="text-cyan-400/30 font-commander text-[9px] font-bold tracking-[0.5em] uppercase">Quantum Neural Architecture • 2.5</p>
             </div>
         </div>
     );
 };
 
 export const checkApiKey = () => {
-  // Key is managed by Vercel Environment Variables. 
-  // Error UI is handled by service responses.
+  if (!process.env.API_KEY) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white p-4">
+        <div className="text-center bg-slate-800 p-8 rounded-[40px] shadow-2xl border border-slate-700 max-w-md font-commander">
+          <Icons.AlertTriangle className="mx-auto h-12 w-12 text-cyan-400 mb-4" />
+          <h1 className="text-xl font-black uppercase tracking-widest">Access Denied</h1>
+          <p className="mt-4 text-slate-400 text-sm leading-relaxed">
+            Engine 3.0 requires a valid API_KEY to initialize quantum reasoning cores.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return null;
 };
 
@@ -100,6 +111,10 @@ export const SourceBubble: React.FC<{ source: Source }> = ({ source }) => (
   </a>
 );
 
+/**
+ * PREMIUM MODAL DROPDOWN SELECTOR
+ * Optimized for touch and high-visibility. Centered pop-up UI.
+ */
 export const Dropdown: React.FC<{
   label?: string;
   options: (string | number)[];
