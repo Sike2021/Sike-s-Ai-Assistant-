@@ -1,37 +1,24 @@
-
 import React, { useState } from 'react';
 import { Icons } from './Icons';
 import { ChatComponent } from './Chat';
-import { SimulationRunner } from './SimulationRunner';
 import { Dropdown, LoadingSpinner } from './Shared';
-import { PageProps, Message } from '../types';
+import { PageProps } from '../types';
 import { 
-    streamSimulationResponse, 
-    streamStudyHelperResponse, 
-    streamWritingResponse, 
-    streamStorybookResponse, 
-    streamGrammarResponse,
+    streamCreativeResponse,
     generateNanoBananaImage
 } from '../services/geminiService';
 
-export const SimulationsPage: React.FC<PageProps> = ({ isOnline, currentUserEmail, userProfileNotes }) => {
-    const [simCode, setSimCode] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'split' | 'chat' | 'sim'>('split');
+export const CreativeStudioPage: React.FC<PageProps> = ({ isOnline, currentUserEmail, userProfileNotes }) => {
     const [visuals, setVisuals] = useState<string[]>([]);
     const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
     const [visualPrompt, setVisualPrompt] = useState('');
-    const [frameCount, setFrameCount] = useState(1);
 
     const handleGenerateVisuals = async () => {
         if (!visualPrompt.trim() || !isOnline) return;
         setIsGeneratingVisuals(true);
         try {
-            const results: string[] = [];
-            for (let i = 0; i < frameCount; i++) {
-                const img = await generateNanoBananaImage(`Scientific visualization of: ${visualPrompt}. Realistic, 4k. Variant ${i+1}`);
-                if (img) results.push(img);
-            }
-            setVisuals(results);
+            const img = await generateNanoBananaImage(`Artistic book illustration: ${visualPrompt}. Cinematic lighting, detailed art style.`);
+            if (img) setVisuals(p => [img, ...p].slice(0, 10));
         } catch (err) {
             console.error("Visual generation error:", err);
         } finally {
@@ -40,136 +27,71 @@ export const SimulationsPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
     };
 
     return (
-        <div className="h-full flex flex-col md:flex-row bg-white dark:bg-slate-900 overflow-hidden relative text-slate-900 dark:text-white">
-            <div className="md:hidden flex-shrink-0 flex border-b border-gray-200 dark:border-slate-800">
-                <button onClick={() => setViewMode('chat')} className={`flex-1 py-3 text-[10px] font-black font-commander uppercase tracking-widest ${viewMode === 'chat' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-slate-500'}`}>Chat</button>
-                <button onClick={() => setViewMode('sim')} className={`flex-1 py-3 text-[10px] font-black font-commander uppercase tracking-widest ${viewMode === 'sim' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-slate-500'}`}>The Lab</button>
-            </div>
-
-            <div className={`flex-1 flex flex-col h-full border-r border-gray-200 dark:border-slate-800 transition-all duration-300 ${viewMode === 'sim' ? 'hidden md:flex' : 'flex'}`}>
+        <div className="h-full flex flex-col md:flex-row bg-white dark:bg-slate-900 overflow-hidden text-slate-900 dark:text-white">
+            <div className="flex-1 flex flex-col h-full border-r border-gray-200 dark:border-slate-800">
                 <ChatComponent 
-                    historyId="simulations" 
-                    pageTitle="Simulation Lab" 
+                    historyId="creative_studio" 
+                    pageTitle="Creative Studio" 
                     welcomeMessage={{
-                        author: 'Lead Engineer', 
-                        text: "Welcome to The Lab. I build real-time simulations. I am aware of all SigNify features—ask me to simulate a physics concept, or use the Language Learner to teach me how to describe results in Sindhi."
+                        author: 'Studio Director', 
+                        text: "Welcome to your Creative Studio. I am here to help you draft novels, write short stories, and even visualize scenes. Tell me what you're working on, and if you need an illustration, use the tool on the right."
                     }} 
-                    placeholder="e.g. Simulate gravitation between two planets..." 
-                    showFilters={false} 
+                    placeholder="Draft a new chapter or describe a scene..." 
+                    showFilters={true} 
                     isOnline={isOnline} 
-                    aiStreamFunction={streamSimulationResponse} 
+                    aiStreamFunction={streamCreativeResponse} 
                     currentUserEmail={currentUserEmail} 
                     userProfileNotes={userProfileNotes}
-                    onSimulationCodeFound={(code) => {
-                        setSimCode(code);
-                        if(window.innerWidth < 768) setViewMode('sim');
-                    }}
                 />
             </div>
 
-            <div className={`flex-1 bg-slate-900 p-2 md:p-4 h-full flex flex-col ${viewMode === 'chat' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="flex justify-between items-center mb-2 px-2">
-                    <h2 className="text-white font-black font-commander uppercase text-xs flex items-center gap-2 tracking-widest">
-                        <Icons.Cpu className="h-5 w-5 text-cyan-400" /> LAB CORE 3.2
-                    </h2>
-                    <span className="text-[10px] font-black font-commander text-slate-500 uppercase tracking-widest underline">AWARENESS ACTIVE</span>
-                </div>
+            <div className="w-full md:w-80 lg:w-96 bg-slate-50 dark:bg-slate-900/50 p-6 flex flex-col border-t md:border-t-0 border-slate-200 dark:border-slate-800">
+                <h2 className="text-[10px] font-black font-commander text-cyan-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                    <Icons.Sparkles className="h-4 w-4" /> Story Illustrator
+                </h2>
                 
-                <div className="flex-1 flex flex-col gap-4">
-                    <div className="flex-[2] rounded-[32px] overflow-hidden border-2 border-slate-800 shadow-2xl relative">
-                        <SimulationRunner code={simCode} images={visuals} />
-                    </div>
+                <div className="space-y-4">
+                    <textarea 
+                        value={visualPrompt}
+                        onChange={(e) => setVisualPrompt(e.target.value)}
+                        placeholder="Describe the character or scene for an illustration..."
+                        className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-medium outline-none focus:border-cyan-500 transition-all resize-none h-24"
+                    />
+                    
+                    <button 
+                        onClick={handleGenerateVisuals} 
+                        disabled={!visualPrompt || isGeneratingVisuals || !isOnline} 
+                        className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black font-commander uppercase text-[10px] tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/20 disabled:opacity-50"
+                    >
+                        {isGeneratingVisuals ? <Icons.Spinner className="h-4 w-4 animate-spin" /> : <Icons.BookImage className="h-4 w-4" />}
+                        {isGeneratingVisuals ? 'Synthesizing Art...' : 'Generate Illustration'}
+                    </button>
 
-                    <div className="flex-1 bg-slate-950/50 p-6 rounded-[32px] border-2 border-slate-800 overflow-y-auto custom-scrollbar">
-                        <h3 className="text-[10px] font-black font-commander text-cyan-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                            <Icons.Sparkles className="h-4 w-4" /> Nano Banana Visualization
-                        </h3>
-                        
-                        <div className="space-y-4">
-                            <div className="flex gap-2">
-                                <input 
-                                    value={visualPrompt}
-                                    onChange={(e) => setVisualPrompt(e.target.value)}
-                                    placeholder="Describe assets for the lab..."
-                                    className="flex-1 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs font-medium outline-none focus:border-cyan-500 transition-all"
-                                />
-                                <div className="w-20">
-                                    <Dropdown options={[1, 2, 3].map(String)} selected={String(frameCount)} onSelect={(v) => setFrameCount(Number(v))} />
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 mt-6">
+                        {visuals.map((src, i) => (
+                            <div key={i} className="group relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm transition-transform hover:scale-[1.02]">
+                                <img src={src} className="w-full h-auto object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = src;
+                                        link.download = `illustration_${Date.now()}.png`;
+                                        link.click();
+                                    }} className="p-3 bg-white text-slate-900 rounded-full shadow-xl">
+                                        <Icons.Download className="h-5 w-5" />
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <button onClick={handleGenerateVisuals} disabled={!visualPrompt || isGeneratingVisuals || !isOnline} className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black font-commander uppercase text-[10px] tracking-widest rounded-xl transition-all flex items-center justify-center gap-2">
-                                {isGeneratingVisuals ? <Icons.Spinner className="h-4 w-4 animate-spin" /> : <Icons.BookImage className="h-4 w-4" />}
-                                {isGeneratingVisuals ? 'Initializing Nano...' : 'Generate Assets'}
-                            </button>
-
-                            {visuals.length > 0 && (
-                                <div className="grid grid-cols-4 gap-2 mt-4">
-                                    {visuals.map((src, i) => (
-                                        <div key={i} className="aspect-square rounded-lg overflow-hidden border border-slate-700"><img src={src} className="w-full h-full object-cover" /></div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        ))}
+                        {visuals.length === 0 && !isGeneratingVisuals && (
+                            <div className="h-32 flex flex-col items-center justify-center text-center opacity-20 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl">
+                                <Icons.BookImage className="h-8 w-8 mb-2" />
+                                <p className="text-[10px] font-black uppercase tracking-widest">Studio Gallery Empty</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-
-export const StudyHelperPage: React.FC<PageProps> = ({ isOnline, currentUserEmail, userProfileNotes }) => (
-    <ChatComponent
-        historyId="studyHelper"
-        pageTitle="Study Helper"
-        welcomeMessage={{ author: 'SigNify Tutor', text: "I can explain any concept. Note: I can also generate real-time simulations in the 'Simulations' tab if you need to visualize a concept!" }}
-        placeholder="Explain photosynthesis or a math problem..."
-        showFilters={true}
-        isOnline={isOnline}
-        aiStreamFunction={streamStudyHelperResponse}
-        currentUserEmail={currentUserEmail}
-        userProfileNotes={userProfileNotes}
-    />
-);
-
-export const WritingPage: React.FC<PageProps> = ({ isOnline, currentUserEmail, userProfileNotes }) => (
-    <ChatComponent
-        historyId="writing"
-        pageTitle="Writing Spirit"
-        welcomeMessage={{ author: 'Writing Spirit', text: "Let's create. Once we've written a scene, you can use the 'Neural Reader' to hear the story with emotional voices." }}
-        placeholder="Start a story or novel scene..."
-        showFilters={false}
-        isOnline={isOnline}
-        aiStreamFunction={streamWritingResponse}
-        currentUserEmail={currentUserEmail}
-        userProfileNotes={userProfileNotes}
-    />
-);
-
-export const StorybookPage: React.FC<PageProps> = ({ isOnline, currentUserEmail, userProfileNotes }) => (
-    <ChatComponent
-        historyId="storybook"
-        pageTitle="Storybook Engine"
-        welcomeMessage={{ author: 'Story Weaver', text: "I create illustrated stories. Remember to use the 'Translator' if you want to convert these to other languages perfectly." }}
-        placeholder="A story about a brave astronaut..."
-        showFilters={false}
-        isOnline={isOnline}
-        aiStreamFunction={streamStorybookResponse}
-        currentUserEmail={currentUserEmail}
-        userProfileNotes={userProfileNotes}
-    />
-);
-
-export const GrammarPage: React.FC<PageProps> = ({ isOnline, currentUserEmail, userProfileNotes }) => (
-    <ChatComponent
-        historyId="grammar"
-        pageTitle="Grammar Expert"
-        welcomeMessage={{ author: 'Grammar Core', text: "I refine your text. If you want to see how verbs change forms, visit the 'Verb Lexicon' for a full database." }}
-        placeholder="Paste text to check grammar and style..."
-        showFilters={false}
-        isOnline={isOnline}
-        aiStreamFunction={streamGrammarResponse}
-        currentUserEmail={currentUserEmail}
-        userProfileNotes={userProfileNotes}
-    />
-);

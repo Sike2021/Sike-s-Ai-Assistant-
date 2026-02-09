@@ -24,8 +24,8 @@ export default async function handler(req: any, res: any) {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    // Standardize on the requested 'Flash' family
-    const targetModel = model || 'gemini-2.5-flash';
+    // Primary model updated as requested
+    const targetModel = model || 'gemini-2.5-flash-preview-09-2025';
 
     // 1. NEURAL AUDIO SYNTHESIS (TTS)
     if (type === 'tts') {
@@ -57,7 +57,7 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ error: "Neural image synthesis failed." });
     }
 
-    // 3. STANDARD REASONING (Gemini 2.5 Flash)
+    // 3. STANDARD REASONING (The Primary Preview Model)
     const response = await ai.models.generateContent({
       model: targetModel,
       contents: contents,

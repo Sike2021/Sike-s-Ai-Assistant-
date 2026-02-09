@@ -1,14 +1,16 @@
-import { Message, Question, UserAnswer, StudentProfile, ExamReport, TranslatorResponse, NotebookSource, VaultFile, VaultTask } from '../types';
+
+import { Message, TranslatorResponse, NotebookSource, VaultFile, VaultTask, Question, UserAnswer, StudentProfile, ExamReport } from '../types';
 import { INJECTED_STORIES } from './injectedKnowledge';
 
 const GLOBAL_CAPABILITIES = `
 [APP FEATURE AWARENESS]
 You are SigNify OS, an integrated educational ecosystem.
-Modules: Simulations, Exam Center, Neural Reader, Verb Lexicon, Translator, Writing Spirit, Study Helper, SigNify LM, Neural Vault.
+Modules: Neural Reader (SigNify LM), Translator, Creative Studio, Neural Vault.
+Creative Studio is a unified module for both raw creative writing and illustrated story generation.
 `;
 
-// Primary 'Flash' core for all reasoning tasks
-const FLASH_MODEL = 'gemini-2.5-flash';
+// Primary 'Flash' core for all reasoning tasks as requested
+const FLASH_MODEL = 'gemini-2.5-flash-preview-09-2025';
 
 export function getGlobalVaultContext(userEmail?: string | null): string {
     let context = "\n\n[NEURAL RECALL]";
@@ -190,32 +192,17 @@ export async function generateNanoBananaImage(prompt: string, aspectRatio: strin
     return result.imageUrl;
 }
 
-/** Normalized Persona Streamers */
-export async function* streamSimulationResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    yield* streamAIChatResponse(p, h, l, img, e, n, `Simulation Engineer`);
-}
-export async function* streamStudyHelperResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    yield* streamAIChatResponse(p, h, l, img, e, n, `Tutor`);
-}
-export async function* streamWritingResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    yield* streamAIChatResponse(p, h, l, img, e, n, `Writing Spirit`);
-}
-export async function* streamStorybookResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    yield* streamAIChatResponse(p, h, l, img, e, n, `Story Weaver`);
-}
-export async function* streamGrammarResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    yield* streamAIChatResponse(p, h, l, img, e, n, `Grammar Core`);
+export async function* streamCreativeResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
+    yield* streamAIChatResponse(p, h, l, img, e, n, `Creative Studio Director`);
 }
 
-export async function* streamNotebookChatResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    const sources: NotebookSource[] = Array.isArray(img) ? img : [];
-    const context = sources.map(src => `[SOURCE: ${src.name}]\n${src.content.slice(0, 2000)}`).join('\n\n');
+export async function* streamNotebookChatResponse(p: string, h: Message[], l: string, sourcesInput: NotebookSource[], e: any, n: any) {
+    const context = sourcesInput.map(src => `[SOURCE: ${src.name}]\n${src.content.slice(0, 2000)}`).join('\n\n');
     yield* streamAIChatResponse(p, h, l, [], e, n + "\n\n" + context, 'LM Studio Researcher');
 }
 
-export async function* streamVaultChatResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    const vaultFiles: VaultFile[] = Array.isArray(img) ? img : [];
-    const context = vaultFiles.map(f => `[VAULT_FILE: ${f.name}]\n${f.content.slice(0, 2000)}`).join('\n\n');
+export async function* streamVaultChatResponse(p: string, h: Message[], l: string, vaultFilesInput: VaultFile[], e: any, n: any) {
+    const context = vaultFilesInput.map(f => `[VAULT_FILE: ${f.name}]\n${f.content.slice(0, 2000)}`).join('\n\n');
     yield* streamAIChatResponse(p, h, l, [], e, (n || "") + "\n\n" + context, 'Neural Guardian');
 }
 
@@ -238,47 +225,111 @@ export async function generateConversationTitle(prompt: string, response: string
     return result.text.trim() || "New Comms";
 }
 
-export async function generateExamQuestions(subject: string, chapter: string, type: string, langs: string[]): Promise<Question[]> {
+// Added missing functions for Exam and VerbForms pages
+
+export async function generateExamQuestions(subject: string, chapter: string, examType: string, languages: string[]): Promise<Question[]> {
+    // FIX: Generate structured exam questions using the logic core with the FLASH_MODEL
     const result = await callProxy({
         type: 'generate',
         model: FLASH_MODEL,
-        contents: `Generate 10 ${type} questions for ${subject} (${chapter}) in ${langs.join('/')}.`,
-        config: { 
+        contents: [{ role: 'user', parts: [{ text: `Generate a set of 5 ${examType} questions for ${subject}, specifically on ${chapter}. 
+        The questions should be in these languages: ${languages.join(', ')}. 
+        If multiple languages are requested, provide the question text in all languages separated by ' / '.` }] }],
+        config: {
             responseMimeType: 'application/json',
-            systemInstruction: 'Return JSON: [{ "question": string, "type": "MCQ", "options": [string], "modelAnswer": string }]'
+            systemInstruction: `You are an expert examiner. Return JSON: 
+            [
+              {
+                "question": "string (with translations if needed)",
+                "type": "MCQ" | "SHORT" | "LONG",
+                "options": ["option1", "option2", "option3", "option4"] (only for MCQ),
+                "modelAnswer": "string"
+              }
+            ]`
         }
     });
     return JSON.parse(result.text);
 }
 
-export async function evaluateExamAnswers(qs: Question[], ans: UserAnswer[], student: StudentProfile, setup: any): Promise<ExamReport> {
+export async function evaluateExamAnswers(
+    questions: Question[],
+    userAnswers: UserAnswer[],
+    studentInfo: StudentProfile,
+    examSetup: any
+): Promise<ExamReport> {
+    // FIX: Evaluate student answers and generate a comprehensive report using the logic core with FLASH_MODEL
     const result = await callProxy({
         type: 'generate',
         model: FLASH_MODEL,
-        contents: `Grade exam. Questions: ${JSON.stringify(qs)}. Answers: ${JSON.stringify(ans)}`,
-        config: { 
+        contents: [{ role: 'user', parts: [{ text: `Evaluate the following exam for student ${studentInfo.name}.
+        Questions: ${JSON.stringify(questions)}
+        User Answers: ${JSON.stringify(userAnswers)}
+        Exam Setup: ${JSON.stringify(examSetup)}` }] }],
+        config: {
             responseMimeType: 'application/json',
-            systemInstruction: 'Return ExamReport JSON.' 
+            systemInstruction: `You are an expert grader. Return an ExamReport in JSON.
+            The breakdown should include for each question:
+            {
+              "question": "string",
+              "userAnswer": "string",
+              "modelAnswer": "string",
+              "isCorrect": boolean,
+              "feedback": "string"
+            }
+            The root object should be:
+            {
+              "studentInfo": StudentProfile,
+              "examSetup": { subject, chapter, examType, language, duration },
+              "results": {
+                "totalMarks": number,
+                "marksObtained": number,
+                "percentage": number,
+                "grade": string,
+                "overallFeedback": string,
+                "breakdown": [...]
+              }
+            }`
         }
     });
-    return { ...JSON.parse(result.text), id: Date.now().toString() };
+    const report = JSON.parse(result.text);
+    // Ensure ID is generated for history tracking
+    report.id = Date.now().toString();
+    return report;
 }
 
 export async function getVerbsByInitial(initial: string): Promise<string[]> {
+    // FIX: Fetch a list of common verbs starting with the provided letter using the logic core with FLASH_MODEL
     const result = await callProxy({
         type: 'generate',
         model: FLASH_MODEL,
-        contents: `List common verbs starting with ${initial}. JSON array of strings.`
+        contents: [{ role: 'user', parts: [{ text: `List 20 common English verbs starting with the letter '${initial}'.` }] }],
+        config: {
+            responseMimeType: 'application/json',
+            systemInstruction: `Return a JSON array of strings: ["verb1", "verb2", ...]`
+        }
     });
     return JSON.parse(result.text);
 }
 
-export async function getVerbDetails(verb: string, lang: string): Promise<any> {
+export async function getVerbDetails(verb: string, language: string): Promise<any> {
+    // FIX: Fetch detailed forms and usage examples for a specific verb using the logic core with FLASH_MODEL
     const result = await callProxy({
         type: 'generate',
         model: FLASH_MODEL,
-        contents: `Details for verb '${verb}' in ${lang}. JSON.`,
-        config: { responseMimeType: 'application/json' }
+        contents: [{ role: 'user', parts: [{ text: `Provide details for the English verb '${verb}' in ${language}.` }] }],
+        config: {
+            responseMimeType: 'application/json',
+            systemInstruction: `Return JSON:
+            {
+              "base": "string",
+              "description": "short description in ${language}",
+              "past": "string",
+              "pastParticiple": "string",
+              "nounForm": "string",
+              "adjectiveForm": "string",
+              "usages": ["example sentence 1", "example sentence 2"]
+            }`
+        }
     });
     return JSON.parse(result.text);
 }
