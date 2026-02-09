@@ -86,7 +86,8 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
         setIsLoading(true);
 
         try {
-            const stream = streamVaultChatResponse(currentInput, messages, files, userProfileNotes, 'Guest', currentUserEmail);
+            // FIX: Corrected argument ordering to match streamVaultChatResponse signature (p: prompt, h: history, l: language, img: files, e: userEmail, n: userProfileNotes)
+            const stream = streamVaultChatResponse(currentInput, messages, 'English', files, currentUserEmail, userProfileNotes);
             let acc = "";
             for await (const chunk of stream) {
                 if (chunk.text) {

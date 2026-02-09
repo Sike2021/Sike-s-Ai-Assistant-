@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Icons } from './Icons';
 import { Dropdown, LoadingSpinner, CopyButton } from './Shared';
@@ -250,7 +249,8 @@ export const StoryReaderPage: React.FC<PageProps> = ({ isOnline, userProfileNote
 
         try {
             // Chat is across ALL sources in the state currently, but we could filter here too
-            const stream = streamNotebookChatResponse(currentInput, messages, sources, userProfileNotes);
+            // FIX: Added missing arguments to match the 6-parameter signature of streamNotebookChatResponse
+            const stream = streamNotebookChatResponse(currentInput, messages, language, sources, currentUserEmail, userProfileNotes);
             let fullText = '';
             for await (const chunk of stream) {
                 if (chunk.text) {

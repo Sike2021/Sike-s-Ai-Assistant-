@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Icons } from './Icons';
 import { Dropdown, CameraModal, LoadingSpinner } from './Shared';
 import { ChatMessage } from './Chat';
@@ -68,7 +68,8 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
         const history = currentMessages;
         const currentInput = input; setInput(''); setAttachedImages([]); setIsLoading(true);
         try {
-            const stream = streamAIChatResponse(currentInput, history, attachedImages, currentUserEmail, userProfileNotes, chatMode, userName);
+            // Corrected signature call: (prompt, history, language, images, email, notes, mode, name)
+            const stream = streamAIChatResponse(currentInput, history, "English", attachedImages, currentUserEmail, userProfileNotes, chatMode, userName);
             let acc = "";
             for await (const chunk of stream) {
                 if (chunk.text) acc += chunk.text;
@@ -84,7 +85,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
         } catch (err) {
             console.error("Transmission Error:", err);
             setConversations(prev => {
-                const up = prev.map(c => c.id === convoId ? { ...c, messages: c.messages.map(m => m.id === botMsg.id ? { ...m, text: "Bandwidth saturation detected. The stable logic core is cooling down. Please retry in 60 seconds." } : m) } : c);
+                const up = prev.map(c => c.id === convoId ? { ...c, messages: c.messages.map(m => m.id === botMsg.id ? { ...m, text: "Bandwidth saturation detected. The stable logic core is cooling down." } : m) } : c);
                 return up;
             });
         } finally { setIsLoading(false); }

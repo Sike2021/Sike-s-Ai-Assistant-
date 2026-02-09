@@ -1,12 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
     <title>SigNify – Giving meaning to knowledge</title>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,9 +30,29 @@
 }
 </script>
 <style>
+  :root {
+    --safe-area-top: env(safe-area-inset-top);
+    --safe-area-bottom: env(safe-area-inset-bottom);
+    --safe-area-left: env(safe-area-inset-left);
+    --safe-area-right: env(safe-area-inset-right);
+  }
   body {
     font-family: 'Inter', sans-serif;
     overflow: hidden;
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+    padding-left: var(--safe-area-left);
+    padding-right: var(--safe-area-right);
+    background-color: #020617;
+  }
+  #root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 600px; /* Mobile focused width on larger displays */
+    margin: 0 auto;
+    background: #0f172a;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
   }
   .font-urdu {
     font-family: 'Noto Naskh Arabic', sans-serif;
@@ -53,26 +74,22 @@
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #0891b2; border-radius: 10px; }
 
   /* Markdown Typography Overhaul */
-  .prose { max-width: none; color: #334155; }
-  .dark .prose { color: #cbd5e1; }
-  .prose h1, .prose h2, .prose h3 { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: -0.02em; margin-top: 1.5em; margin-bottom: 0.5em; color: #0f172a; }
-  .dark .prose h1, .dark .prose h2, .dark .prose h3 { color: #f8fafc; }
+  .prose { max-width: none; color: #cbd5e1; }
+  .prose h1, .prose h2, .prose h3 { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: -0.02em; margin-top: 1.5em; margin-bottom: 0.5em; color: #f8fafc; }
   .prose p { margin-bottom: 1.2em; line-height: 1.7; }
-  .prose code { background: #f1f5f9; padding: 0.2rem 0.4rem; rounded: 6px; font-size: 0.9em; color: #0891b2; }
-  .dark .prose code { background: #0f172a; color: #22d3ee; }
-  .prose pre { background: #020617 !important; border: 1px solid #1e293b; border-radius: 16px; padding: 1.25rem; }
+  .prose code { background: #0f172a; color: #22d3ee; padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.9em; }
+  .prose pre { background: #020617 !important; border: 1px solid #1e293b; border-radius: 16px; padding: 1.25rem; overflow-x: auto; }
 
   /* Jelly Animation & Loader */
   .sig-jelly-container {
     --uib-size: 60px;
-    --uib-color: #0891b2;
+    --uib-color: #22d3ee;
     --uib-speed: 1.75s;
     position: relative;
     height: var(--uib-size);
     width: var(--uib-size);
     filter: url('#uib-jelly-triangle-ooze');
   }
-  .dark .sig-jelly-container { --uib-color: #22d3ee; }
   .sig-jelly-dot, .sig-jelly-container::before, .sig-jelly-container::after {
     content: ''; position: absolute; width: 33%; height: 33%; background-color: var(--uib-color); border-radius: 100%; will-change: transform; transition: background-color 0.3s ease;
   }
@@ -92,15 +109,10 @@
   }
 
   /* Commander Overrides */
-  .commander-mode {
-    --cm-bg: #020617;
-    --cm-primary: #22d3ee;
-    --cm-primary-glow: rgba(34, 211, 238, 0.1);
-  }
-  .commander-mode body { background-color: var(--cm-bg) !important; }
+  .commander-mode body { background-color: #020617 !important; }
 </style>
 </head>
-  <body class="bg-slate-50 dark:bg-slate-900 text-gray-900 dark:text-white antialiased">
+  <body class="bg-slate-950 text-white antialiased">
     <svg width="0" height="0" style="position: absolute;">
       <defs>
         <filter id="uib-jelly-triangle-ooze">
@@ -110,7 +122,7 @@
         </filter>
       </defs>
     </svg>
-    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-100 via-white to-cyan-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/20 z-0"></div>
+    <div class="fixed top-0 left-0 w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/20 z-0"></div>
     <div id="root" class="relative z-10"></div>
   </body>
 </html>
