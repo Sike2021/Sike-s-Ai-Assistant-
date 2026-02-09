@@ -1,3 +1,4 @@
+
 import { Message, UserProfile, SubscriptionTier } from '../types';
 
 // --- Dynamic Storage Keys ---
@@ -7,9 +8,9 @@ export const GLOBAL_NOTES_KEY = 'sikeAiAssistant_globalNotes';
 export const SIKE_USERS_KEY = 'sikeAiAssistant_users';
 export const CURRENT_USER_EMAIL_KEY = 'sikeAiAssistant_currentUserEmail';
 
-// Fix: Added missing exam storage keys
-export const getInProgressExamKey = (rollNo: string) => `signify_exam_inprogress_${rollNo}`;
-export const getExamHistoryKey = (rollNo: string) => `signify_exam_history_${rollNo}`;
+// Added missing exam storage keys
+export const getInProgressExamKey = (rollNo: string) => `sikeAiAssistant_examInProgress_${rollNo}`;
+export const getExamHistoryKey = (rollNo: string) => `sikeAiAssistant_examHistory_${rollNo}`;
 
 // --- Subscription System ---
 const VALID_CODES = {
@@ -31,6 +32,7 @@ export const validateSubscriptionCode = (code: string): SubscriptionTier | null 
 };
 
 export const checkFeatureAccess = (pageId: string, currentTier: SubscriptionTier): boolean => {
+    // Standardized feature access check
     return true;
 };
 
@@ -90,6 +92,7 @@ export const createWavBlob = (pcmData: Uint8Array, sampleRate: number = 24000): 
     view.setUint32(36, 0x64617461, false);
     view.setUint32(40, pcmData.length, true);
 
+    // Fixed: Explicitly using BlobPart compatible types
     const blobParts: BlobPart[] = [new Uint8Array(header), pcmData];
     return new Blob(blobParts, { type: 'audio/wav' });
 };

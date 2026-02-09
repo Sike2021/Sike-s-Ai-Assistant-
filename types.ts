@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   text: string;
@@ -74,7 +75,7 @@ export interface PageProps {
     userProfileNotes?: string;
 }
 
-// Fix: Added missing types for Exam module
+// Added missing exam related types
 export interface StudentProfile {
     name: string;
     className: string;
@@ -84,9 +85,9 @@ export interface StudentProfile {
 
 export interface Question {
     question: string;
-    type: 'MCQ' | 'SHORT' | 'LONG';
+    type: string;
     options?: string[];
-    correctAnswer?: string;
+    modelAnswer?: string;
 }
 
 export interface UserAnswer {
@@ -97,13 +98,7 @@ export interface UserAnswer {
 export interface ExamReport {
     id: string;
     studentInfo: StudentProfile;
-    examSetup: {
-        subject: string;
-        chapter: string;
-        examType: string;
-        language: string[];
-        duration: number;
-    };
+    examSetup: any;
     results: {
         marksObtained: number;
         totalMarks: number;
@@ -125,11 +120,5 @@ export interface InProgressExamSession {
     userAnswers: UserAnswer[];
     timeLeft: number;
     studentInfo: StudentProfile;
-    examSetup: {
-        subject: string;
-        chapter: string;
-        examType: string;
-        language: string[];
-        duration: number;
-    };
+    examSetup: any;
 }

@@ -34,7 +34,7 @@ export const MainMenuPage: React.FC<{
                             <Icons.Logo className="h-8 w-8 text-white" />
                         </div>
                         <h1 className="text-3xl font-black font-commander text-white uppercase tracking-tighter mb-2">Neural Chat</h1>
-                        <p className="text-cyan-100 text-sm font-medium max-w-[240px]">High-speed transmission via Gemini 2.5 Flash Core.</p>
+                        <p className="text-cyan-100 text-sm font-medium max-w-[240px]">High-speed transmission via Gemini 3.0 Core.</p>
                         <div className="mt-6 flex items-center gap-2 text-white font-black text-[10px] tracking-widest uppercase">
                             <span>Open Connection</span>
                             <Icons.ArrowRight className="h-4 w-4" />
@@ -109,7 +109,7 @@ export const MainMenuPage: React.FC<{
                 </div>
                 
                 <div className="text-center pt-4">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">Engine 3.2 • Powered by 2.5 Flash Preview</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">Engine 3.2 • Powered by 3.0 Flash Core</p>
                 </div>
             </div>
         </div>
@@ -124,7 +124,7 @@ export const AboutContactPage: React.FC = () => {
                     <h1 className="text-2xl font-black font-commander uppercase tracking-tighter text-cyan-600 dark:text-cyan-400 mb-4">About SigNify</h1>
                     <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
                         Designed by Sikandar Ali Malik, SigNify OS is an advanced research and expression environment.
-                        It utilizes the 2.5 Flash Core to process complex data and local linguistic training for Sindhi and Urdu.
+                        It utilizes the latest Gemini Intelligence Core to process complex data and local linguistic training.
                     </p>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center gap-4">
