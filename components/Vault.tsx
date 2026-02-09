@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Icons } from './Icons';
 import { LoadingSpinner, Dropdown, CopyButton } from './Shared';
@@ -86,7 +85,6 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
         setIsLoading(true);
 
         try {
-            // FIX: Corrected argument ordering to match streamVaultChatResponse signature (p: prompt, h: history, l: language, img: files, e: userEmail, n: userProfileNotes)
             const stream = streamVaultChatResponse(currentInput, messages, 'English', files, currentUserEmail, userProfileNotes);
             let acc = "";
             for await (const chunk of stream) {
@@ -183,7 +181,7 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
                 <div className="flex-shrink-0 border-b border-slate-800 p-4 md:px-10 flex justify-between items-center bg-slate-950/80 backdrop-blur-md">
                     <div className="space-y-0.5">
                         <h1 className="text-xl font-black uppercase tracking-widest text-white">Neural <span className="text-cyan-400">Vault 4.0</span></h1>
-                        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.5em]">Stable Engine: Gemini 3.1 Flash</p>
+                        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.5em]">Stable Engine: Gemini 2.5 Flash</p>
                     </div>
                     {indexingStatus && (
                         <div className="flex items-center gap-3 px-4 py-2 bg-cyan-600/10 border border-cyan-500/30 rounded-full animate-in fade-in zoom-in duration-300">

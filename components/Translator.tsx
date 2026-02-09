@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Icons } from './Icons';
 import { Dropdown, LoadingSpinner } from './Shared';
@@ -152,7 +151,7 @@ export const TranslatorPage: React.FC<PageProps> = ({ isOnline }) => {
                     </div>
                     <div>
                         <h1 className="text-3xl font-black font-commander uppercase tracking-tighter text-slate-900 dark:text-white">Neural Linguistics</h1>
-                        <p className="text-sm text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-widest">Stable Core: Gemini 3.1 Flash</p>
+                        <p className="text-sm text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-widest">Stable Core: Gemini 2.5 Flash</p>
                     </div>
                 </div>
 

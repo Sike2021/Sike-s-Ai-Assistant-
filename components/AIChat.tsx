@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Icons } from './Icons';
 import { Dropdown, CameraModal, LoadingSpinner } from './Shared';
@@ -68,7 +67,6 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
         const history = currentMessages;
         const currentInput = input; setInput(''); setAttachedImages([]); setIsLoading(true);
         try {
-            // Corrected signature call: (prompt, history, language, images, email, notes, mode, name)
             const stream = streamAIChatResponse(currentInput, history, "English", attachedImages, currentUserEmail, userProfileNotes, chatMode, userName);
             let acc = "";
             for await (const chunk of stream) {
@@ -123,7 +121,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                     <div className="max-w-4xl mx-auto">
                         {currentMessages.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center py-20 text-center">
-                                <LoadingSpinner size="80px" label="Stable Core: Gemini 3.1 Flash" />
+                                <LoadingSpinner size="80px" label="Stable Core: Gemini 2.5 Flash" />
                                 <h2 className="text-3xl font-black font-commander uppercase tracking-tighter mt-6">SigNify Engine 3.2</h2>
                                 <p className="text-slate-500 mt-2">Welcome, {userName}. Awaiting instruction via Stable Logic Core.</p>
                             </div>
