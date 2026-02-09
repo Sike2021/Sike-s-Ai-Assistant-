@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-    <title>SigNify – Giving meaning to knowledge</title>
+    <title>SigNify OS – Intelligence Engine</title>
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#0891b2" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,79 +34,41 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    max-width: 600px; /* Mobile focused width on larger displays */
+    max-width: 600px;
     margin: 0 auto;
     background: #0f172a;
-    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    box-shadow: 0 0 100px rgba(0,0,0,0.8);
   }
-  .font-urdu {
-    font-family: 'Noto Naskh Arabic', sans-serif;
-    line-height: 2.2;
-    font-size: 1.15rem;
-  }
-  .font-sindhi {
-    font-family: 'Noto Sans Sindhi', sans-serif;
-    line-height: 2.2;
-    font-size: 1.15rem;
-  }
-  .font-commander {
-    font-family: 'Orbitron', sans-serif;
-  }
-  
-  /* Stylish Scrollbars */
+  .font-urdu { font-family: 'Noto Naskh Arabic', sans-serif; line-height: 2.2; font-size: 1.15rem; }
+  .font-sindhi { font-family: 'Noto Sans Sindhi', sans-serif; line-height: 2.2; font-size: 1.15rem; }
+  .font-commander { font-family: 'Orbitron', sans-serif; letter-spacing: 0.05em; }
   .custom-scrollbar::-webkit-scrollbar { width: 4px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #0891b2; border-radius: 10px; }
-
-  /* Markdown Typography */
   .prose { max-width: none; color: #cbd5e1; }
-  .prose h1, .prose h2, .prose h3 { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: -0.02em; margin-top: 1.5em; margin-bottom: 0.5em; color: #f8fafc; }
-  .prose p { margin-bottom: 1.2em; line-height: 1.7; }
-  .prose code { background: #0f172a; color: #22d3ee; padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.9em; }
-  .prose pre { background: #020617 !important; border: 1px solid #1e293b; border-radius: 16px; padding: 1.25rem; overflow-x: auto; }
-
-  /* Jelly Animation & Loader */
-  .sig-jelly-container {
-    --uib-size: 60px;
-    --uib-color: #22d3ee;
-    --uib-speed: 1.75s;
-    position: relative;
-    height: var(--uib-size);
-    width: var(--uib-size);
-    filter: url('#uib-jelly-triangle-ooze');
-  }
-  .sig-jelly-dot, .sig-jelly-container::before, .sig-jelly-container::after {
-    content: ''; position: absolute; width: 33%; height: 33%; background-color: var(--uib-color); border-radius: 100%; will-change: transform; transition: background-color 0.3s ease;
-  }
-  .sig-jelly-dot { top: 6%; left: 30%; animation: sig-grow var(--uib-speed) ease infinite; }
-  .sig-jelly-container::before { bottom: 6%; right: 0; animation: sig-grow var(--uib-speed) ease calc(var(--uib-speed) * -0.666) infinite; }
-  .sig-jelly-container::after { bottom: 6%; left: 0; animation: sig-grow var(--uib-speed) ease calc(var(--uib-speed) * -0.333) infinite; }
+  .prose h1, .prose h2, .prose h3 { font-family: 'Orbitron', sans-serif; font-weight: 700; color: #f8fafc; margin-top: 1.5em; }
+  .prose code { background: #0f172a; color: #22d3ee; padding: 0.2rem 0.4rem; border-radius: 6px; }
+  .prose pre { background: #020617 !important; border: 1px solid #1e293b; border-radius: 16px; padding: 1.25rem; }
+  .sig-jelly-container { --uib-size: 60px; --uib-color: #22d3ee; --uib-speed: 1.75s; position: relative; height: var(--uib-size); width: var(--uib-size); filter: url('#uib-jelly-triangle-ooze'); }
+  .sig-jelly-dot, .sig-jelly-container::before, .sig-jelly-container::after { content: ''; position: absolute; width: 33%; height: 33%; background-color: var(--uib-color); border-radius: 100%; animation: sig-grow var(--uib-speed) ease infinite; }
+  .sig-jelly-dot { top: 6%; left: 30%; }
+  .sig-jelly-container::before { bottom: 6%; right: 0; animation-delay: calc(var(--uib-speed) * -0.666); }
+  .sig-jelly-container::after { bottom: 6%; left: 0; animation-delay: calc(var(--uib-speed) * -0.333); }
   .sig-jelly-traveler { position: absolute; top: 6%; left: 30%; width: 33%; height: 33%; background-color: var(--uib-color); border-radius: 100%; animation: sig-triangulate var(--uib-speed) ease infinite; }
-
-  @keyframes sig-triangulate {
-    0%, 100% { transform: none; }
-    33.333% { transform: translate(120%, 175%); }
-    66.666% { transform: translate(-95%, 175%); }
-  }
-  @keyframes sig-grow {
-    0%, 85%, 100% { transform: scale(1.5); }
-    50%, 60% { transform: scale(0); }
-  }
-
-  /* Commander Overrides */
-  .commander-mode body { background-color: #020617 !important; }
+  @keyframes sig-triangulate { 0%, 100% { transform: none; } 33.333% { transform: translate(120%, 175%); } 66.666% { transform: translate(-95%, 175%); } }
+  @keyframes sig-grow { 0%, 85%, 100% { transform: scale(1.5); } 50%, 60% { transform: scale(0); } }
 </style>
 <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
-    "recharts": "https://esm.sh/recharts@^3.7.0",
-    "jszip": "https://esm.sh/jszip@^3.10.1",
     "react/": "https://esm.sh/react@^19.2.4/",
     "react": "https://esm.sh/react@^19.2.4",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.3",
-    "vite": "https://esm.sh/vite@^7.3.1"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "jszip": "https://esm.sh/jszip@^3.10.1",
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.3"
   }
 }
 </script>
@@ -121,8 +83,7 @@
         </filter>
       </defs>
     </svg>
-    <div class="fixed top-0 left-0 w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/20 z-0"></div>
-    <div id="root" class="relative z-10"></div>
+    <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

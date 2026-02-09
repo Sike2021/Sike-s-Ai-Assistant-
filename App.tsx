@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Header } from './components/Header';
 import { UserProfile } from './types';
-import { checkApiKey, LoginModal, SelectionCopyPopover, SubscriptionModal, SplashScreen } from './components/Shared';
+import { LoginModal, SelectionCopyPopover, SubscriptionModal, SplashScreen } from './components/Shared';
 import { MainMenuPage, AboutContactPage, SikesProfilePage } from './components/InfoPages';
 import { AIChatPage } from './components/AIChat';
 import { CreativeStudioPage } from './components/SpecializedChats';
@@ -12,7 +12,6 @@ import { StoryReaderPage } from './components/StoryReader';
 import { CURRENT_USER_EMAIL_KEY, SIKE_USERS_KEY, GLOBAL_NOTES_KEY, validateSubscriptionCode } from './utils/appUtils';
 
 export const App: React.FC = () => {
-  const apiKeyError = checkApiKey();
   const [isInitializing, setIsInitializing] = useState(true);
   const [page, setPage] = useState('mainMenu');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -139,7 +138,6 @@ export const App: React.FC = () => {
       }
   };
   
-  if (apiKeyError) return apiKeyError;
   if (isInitializing) return <SplashScreen />;
 
   const renderPage = () => {
@@ -160,7 +158,7 @@ export const App: React.FC = () => {
   return (
     <div className="flex flex-col h-screen font-sans bg-slate-100 dark:bg-slate-900">
       <Header 
-        page={page} setPage={setPage} theme={theme} setTheme={setTheme} onGoHome={() => setPage('mainMenu')} userProfile={userProfile} onLogout={handleLogout} isCommander={isCommander} onStartAuth={() => setIsLoginModalOpen(false)} onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
+        page={page} setPage={setPage} theme={theme} setTheme={setTheme} onGoHome={() => setPage('mainMenu')} userProfile={userProfile} onLogout={handleLogout} isCommander={isCommander} onStartAuth={() => setIsLoginModalOpen(true)} onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
       />
       <main className="flex-1 overflow-hidden">
         {renderPage()}

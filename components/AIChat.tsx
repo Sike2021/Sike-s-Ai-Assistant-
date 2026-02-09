@@ -28,7 +28,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
 
     const userName = currentUser?.name || 'Guest';
 
-    const convKey = getConversationsKey(currentUserEmail);
+    const convKey = getConversationsKey(currentUserEmail || null);
     useEffect(() => {
         if (convKey) {
             const saved = localStorage.getItem(convKey);
@@ -60,7 +60,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
             } else {
                 updated = [{ id: convoId, title: 'New Transmission', messages: [userMsg, botMsg], lastUpdated: Date.now() }, ...prev];
             }
-            localStorage.setItem(convKey, JSON.stringify(updated));
+            if (convKey) localStorage.setItem(convKey, JSON.stringify(updated));
             return updated;
         });
 
@@ -73,7 +73,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                 if (chunk.text) acc += chunk.text;
                 setConversations(prev => {
                     const up = prev.map(c => c.id === convoId ? { ...c, messages: c.messages.map(m => m.id === botMsg.id ? { ...m, text: acc } : m) } : c);
-                    localStorage.setItem(convKey, JSON.stringify(up));
+                    if (convKey) localStorage.setItem(convKey, JSON.stringify(up));
                     return up;
                 });
             }
@@ -91,7 +91,6 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
 
     return (
         <div className="flex h-full bg-white dark:bg-slate-950 overflow-hidden">
-            {/* Mobile History Drawer */}
             <div className={`fixed inset-0 z-[100] transition-opacity duration-300 ${isHistoryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsHistoryOpen(false)}></div>
                 <div className={`absolute top-0 left-0 bottom-0 w-80 bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-300 transform ${isHistoryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -110,7 +109,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                                     <p className="text-[9px] text-slate-400 mt-1 font-mono">{new Date(c.lastUpdated).toLocaleDateString()}</p>
                                     <Icons.Trash onClick={(e) => { e.stopPropagation(); setConversations(prev => {
                                         const filtered = prev.filter(p => p.id !== c.id);
-                                        localStorage.setItem(convKey, JSON.stringify(filtered));
+                                        if (convKey) localStorage.setItem(convKey, JSON.stringify(filtered));
                                         return filtered;
                                     }); }} className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
@@ -121,7 +120,6 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
             </div>
 
             <div className="flex-1 flex flex-col relative">
-                {/* Top Action Bar */}
                 <div className="flex-shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between gap-2 px-4">
                     <button onClick={() => setIsHistoryOpen(true)} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-cyan-600 dark:text-cyan-400 active:scale-90 transition-all">
                         <Icons.Menu className="h-5 w-5" />
@@ -134,7 +132,6 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                     </button>
                 </div>
 
-                {/* Chat History */}
                 <div className="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
                     <div className="max-w-4xl mx-auto">
                         {currentMessages.length === 0 ? (
@@ -155,14 +152,13 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                     </div>
                 </div>
 
-                {/* Input Area */}
                 <div className="p-4 md:p-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-t border-slate-200 dark:border-slate-800">
                     <div className="max-w-4xl mx-auto">
                         {attachedImages.length > 0 && (
                             <div className="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
                                 {attachedImages.map((img, i) => (
                                     <div key={i} className="relative flex-shrink-0">
-                                        <img src={`data:${img.mimeType};base64,${img.base64}`} className="h-16 w-16 object-cover rounded-xl border-2 border-cyan-500" />
+                                        <img src={`data:${img.mimeType};base64,${img.base64}`} className="h-16 w-16 object-cover rounded-xl border-2 border-cyan-500" alt="attachment" />
                                         <button onClick={() => setAttachedImages(p => p.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"><Icons.X className="h-3 w-3"/></button>
                                     </div>
                                 ))}
@@ -175,7 +171,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                                     onChange={(e) => setInput(e.target.value)} 
                                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmit())} 
                                     placeholder="Type instructions..." 
-                                    className="w-full pl-6 pr-12 py-5 bg-slate-100 dark:bg-slate-800/80 rounded-[28px] border-2 border-transparent focus:border-cyan-500 outline-none transition-all font-bold text-base resize-none max-h-40 overflow-y-auto" 
+                                    className="w-full pl-6 pr-12 py-5 bg-slate-100 dark:bg-slate-800/80 rounded-[28px] border-2 border-transparent focus:border-cyan-500 outline-none transition-all font-bold text-base resize-none max-h-40 overflow-y-auto text-slate-800 dark:text-white" 
                                     rows={1} 
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -183,13 +179,13 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                                 </div>
                             </div>
                             <button onClick={() => setIsCameraOpen(true)} className="p-5 bg-slate-100 dark:bg-slate-800 rounded-3xl text-slate-500 active:scale-90 transition-all"><Icons.Camera className="h-5 w-5" /></button>
-                            <button onClick={() => handleSubmit()} disabled={isLoading || !input.trim()} className="p-5 bg-cyan-600 text-white rounded-3xl shadow-xl shadow-cyan-600/30 active:scale-90 transition-all disabled:opacity-50"><Icons.Send className="h-5 w-5" /></button>
+                            <button onClick={() => handleSubmit()} disabled={isLoading || (!input.trim() && attachedImages.length === 0)} className="p-5 bg-cyan-600 text-white rounded-3xl shadow-xl shadow-cyan-600/30 active:scale-90 transition-all disabled:opacity-50"><Icons.Send className="h-5 w-5" /></button>
                         </div>
                     </div>
                 </div>
             </div>
             <input type="file" ref={fileInputRef} className="hidden" multiple onChange={(e) => {
-                const files = Array.from(e.target.files || []);
+                const files = Array.from(e.target.files || []) as File[];
                 files.forEach(file => {
                     const reader = new FileReader();
                     reader.onload = () => setAttachedImages(p => [...p, { base64: (reader.result as string).split(',')[1], mimeType: file.type, name: file.name }]);

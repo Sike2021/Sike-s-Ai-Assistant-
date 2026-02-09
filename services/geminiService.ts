@@ -1,23 +1,18 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Message, TranslatorResponse, NotebookSource, VaultFile, VaultTask, Question, UserAnswer, StudentProfile, ExamReport } from '../types';
-import { INJECTED_STORIES } from './injectedKnowledge';
 
 const GLOBAL_CAPABILITIES = `
 [APP FEATURE AWARENESS]
 You are SigNify OS, an integrated educational ecosystem.
 Modules: Neural Reader (SigNify LM), Translator, Creative Studio, Neural Vault.
-Creative Studio is a unified module for both raw creative writing and illustrated story generation.
 `;
 
-const FLASH_MODEL = 'gemini-2.5-flash-preview-09-2025';
+const PRIMARY_MODEL = 'gemini-2.5-flash-preview-09-2025';
+const IMAGE_MODEL = 'gemini-2.5-flash-image';
+const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 
 export function getGlobalVaultContext(userEmail?: string | null): string {
     let context = "\n\n[NEURAL RECALL]";
-    context += "\n--- SYSTEM DATA ---";
-    INJECTED_STORIES.forEach(s => {
-        context += `\n- SYS_ID: ${s.id} | NAME: ${s.name}\n  CONTENT: ${s.content}\n`;
-    });
-
     try {
         const storageKey = `signify_vault_${(userEmail || 'global').replace(/[@.]/g, '_')}`;
         const saved = localStorage.getItem(storageKey);
@@ -87,7 +82,7 @@ export async function* streamAIChatResponse(
     contents.push({ role: 'user', parts: currentParts });
 
     const response = await ai.models.generateContentStream({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents,
         config: { systemInstruction: sys }
     });
@@ -100,7 +95,7 @@ export async function* streamAIChatResponse(
 export async function analyzeVaultFile(file: VaultFile): Promise<{ summary: string, tasks: VaultTask[] }> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `Analyze file: ${file.name}. Content: ${file.content.slice(0, 10000)}`,
         config: { 
             responseMimeType: 'application/json',
@@ -117,7 +112,7 @@ export async function analyzeVaultFile(file: VaultFile): Promise<{ summary: stri
 export async function getTranslatorResponse(text: string, sourceLang: string, targetLang: string): Promise<TranslatorResponse> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `Translate from ${sourceLang} to ${targetLang}: "${text}"`,
         config: { 
             responseMimeType: 'application/json',
@@ -130,7 +125,7 @@ export async function getTranslatorResponse(text: string, sourceLang: string, ta
 export async function getTranslatorResponseFromImage(base64: string, mimeType: string, sourceLang: string, targetLang: string): Promise<TranslatorResponse> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: [
             { role: 'user', parts: [{ inlineData: { data: base64, mimeType } }, { text: `Extract text and translate from ${sourceLang} to ${targetLang}.` }] }
         ],
@@ -145,7 +140,7 @@ export async function getTranslatorResponseFromImage(base64: string, mimeType: s
 export async function generateGeminiTTS(text: string, voice: string = 'Kore', emotion: string = 'Neutral'): Promise<string | undefined> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-preview-tts',
+        model: TTS_MODEL,
         contents: [{ parts: [{ text: `Say with ${emotion} tone: ${text}` }] }],
         config: {
             responseModalities: [Modality.AUDIO],
@@ -158,7 +153,7 @@ export async function generateGeminiTTS(text: string, voice: string = 'Kore', em
 export async function generateMultiSpeakerTTS(text: string, v1: string, v2: string): Promise<string | undefined> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-preview-tts',
+        model: TTS_MODEL,
         contents: [{ parts: [{ text }] }],
         config: {
             responseModalities: [Modality.AUDIO],
@@ -178,7 +173,7 @@ export async function generateMultiSpeakerTTS(text: string, v1: string, v2: stri
 export async function generateNanoBananaImage(prompt: string, aspectRatio: string = "1:1"): Promise<string | undefined> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: IMAGE_MODEL,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: { imageConfig: { aspectRatio } }
     });
@@ -205,7 +200,7 @@ export async function* streamVaultChatResponse(p: string, h: Message[], l: strin
 export async function generateNotebookOverview(sources: NotebookSource[], duration: number): Promise<string> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `Create a ${duration} minute podcast script for these sources: ${sources.map(s => s.name).join(', ')}`,
         config: { systemInstruction: 'Two speakers (S1 and S2) discussing key insights. Engaging tone.' }
     });
@@ -215,7 +210,7 @@ export async function generateNotebookOverview(sources: NotebookSource[], durati
 export async function generateConversationTitle(prompt: string, response: string): Promise<string> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const result = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `Summarize in 3 words: User: ${prompt}. Bot: ${response}`
     });
     return result.text.trim() || "New Comms";
@@ -224,7 +219,7 @@ export async function generateConversationTitle(prompt: string, response: string
 export async function generateExamQuestions(subject: string, chapter: string, examType: string, languages: string[]): Promise<Question[]> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `Generate a set of 5 ${examType} questions for ${subject}, specifically on ${chapter} in: ${languages.join(', ')}.`,
         config: {
             responseMimeType: 'application/json',
@@ -237,7 +232,7 @@ export async function generateExamQuestions(subject: string, chapter: string, ex
 export async function evaluateExamAnswers(questions: Question[], userAnswers: UserAnswer[], studentInfo: StudentProfile, examSetup: any): Promise<ExamReport> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `Evaluate exam for ${studentInfo.name}. Questions: ${JSON.stringify(questions)} User Answers: ${JSON.stringify(userAnswers)}`,
         config: {
             responseMimeType: 'application/json',
@@ -252,7 +247,7 @@ export async function evaluateExamAnswers(questions: Question[], userAnswers: Us
 export async function getVerbsByInitial(initial: string): Promise<string[]> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `List 20 common English verbs starting with '${initial}'.`,
         config: { responseMimeType: 'application/json', systemInstruction: 'Return JSON array of strings.' }
     });
@@ -262,7 +257,7 @@ export async function getVerbsByInitial(initial: string): Promise<string[]> {
 export async function getVerbDetails(verb: string, language: string): Promise<any> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-        model: FLASH_MODEL,
+        model: PRIMARY_MODEL,
         contents: `Provide details for '${verb}' in ${language}.`,
         config: {
             responseMimeType: 'application/json',

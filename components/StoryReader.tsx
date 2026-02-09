@@ -71,15 +71,6 @@ export const StoryReaderPage: React.FC<PageProps> = ({ isOnline, userProfileNote
     const emotionOptions = ['Storyteller', 'Cheerful', 'Suspenseful', 'Serious', 'Whisper', 'Angry'];
     const durationOptions = [5, 10, 20];
 
-    // Auto-discover hardcoded stories on load
-    useEffect(() => {
-        if (sources.length === 0) {
-            setSources(INJECTED_STORIES);
-            // Default select all system stories for convenience
-            setSelectedSourceIds(new Set(INJECTED_STORIES.map(s => s.id)));
-        }
-    }, []);
-
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isChatLoading]);
@@ -248,8 +239,6 @@ export const StoryReaderPage: React.FC<PageProps> = ({ isOnline, userProfileNote
         setIsChatLoading(true);
 
         try {
-            // Chat is across ALL sources in the state currently, but we could filter here too
-            // FIX: Added missing arguments to match the 6-parameter signature of streamNotebookChatResponse
             const stream = streamNotebookChatResponse(currentInput, messages, language, sources, currentUserEmail, userProfileNotes);
             let fullText = '';
             for await (const chunk of stream) {
@@ -324,7 +313,7 @@ export const StoryReaderPage: React.FC<PageProps> = ({ isOnline, userProfileNote
                                 onClick={() => toggleSourceSelection(s.id)}
                                 className={`p-4 rounded-2xl border transition-all group relative cursor-pointer ${
                                     isSelected 
-                                    ? 'bg-cyan-600/10 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.1)]' 
+                                    ? 'bg-cyan-600/10 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.15)]' 
                                     : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'
                                 }`}
                             >
@@ -508,7 +497,7 @@ export const StoryReaderPage: React.FC<PageProps> = ({ isOnline, userProfileNote
                                         <div className="h-96 flex flex-col items-center justify-center text-center opacity-30 grayscale">
                                             <Icons.MessageSquare className="h-16 w-16 mb-6" />
                                             <h3 className="text-xl font-black font-commander uppercase tracking-widest">Fused Research Matrix</h3>
-                                            <p className="text-sm mt-2 max-w-xs">Ask specific questions about your {sources.length} sources (including System Stories). SigNify cross-references every source to give you the most complete answer.</p>
+                                            <p className="text-sm mt-2 max-w-xs">Ask specific questions about your {sources.length} sources. SigNify cross-references every source to give you the most complete answer.</p>
                                         </div>
                                     ) : (
                                         messages.map(m => (

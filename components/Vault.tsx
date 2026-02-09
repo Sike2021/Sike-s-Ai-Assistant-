@@ -19,7 +19,6 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const isCommander = currentUserEmail === 'sikandarmalik415@gmail.com';
     const storageKey = useMemo(() => `signify_vault_${(currentUserEmail || 'global').replace(/[@.]/g, '_')}`, [currentUserEmail]);
 
     useEffect(() => {
@@ -121,24 +120,6 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
                 </div>
                 
                 <div className="p-4 flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                    {/* Admin/Commander Special Section */}
-                    {isCommander && (
-                        <div className="mb-6 space-y-3">
-                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-4">System Logic Matrix</p>
-                            {INJECTED_STORIES.map(s => (
-                                <div key={s.id} onClick={() => setActiveFileId(s.id)} className={`p-4 rounded-2xl border transition-all cursor-pointer group relative ${activeFileId === s.id ? 'bg-indigo-600/10 border-indigo-500' : 'bg-slate-800/30 border-slate-800 opacity-80'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <Icons.Cpu className={`h-4 w-4 ${activeFileId === s.id ? 'text-indigo-400' : 'text-slate-600'}`} />
-                                        <div className="min-w-0">
-                                            <p className="text-[10px] font-bold truncate">{s.name}</p>
-                                            <p className="text-[8px] text-slate-500 uppercase">Hardcoded System File</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4">Neural Data Nodes</p>
                     {files.map(f => (
                         <div key={f.id} onClick={() => setActiveFileId(f.id)} className={`p-4 rounded-2xl border transition-all cursor-pointer group relative ${activeFileId === f.id ? 'bg-cyan-600/10 border-cyan-500 shadow-[0_0_25px_rgba(34,211,238,0.15)]' : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'}`}>
@@ -199,7 +180,7 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
                                     <div className="absolute inset-0 bg-cyan-500/5 blur-3xl rounded-full group-hover:bg-cyan-500/10 transition-all duration-1000"></div>
                                     <LoadingSpinner size="120px" label="Vault Ready" />
                                     <h2 className="text-4xl font-black uppercase tracking-tighter mt-12 mb-4 bg-gradient-to-r from-white to-slate-500 bg-clip-text text-transparent">Quantum Repository</h2>
-                                    <p className="text-slate-500 text-sm max-w-sm leading-relaxed mx-auto">Upload technical documents or logs. SigNify indexes them instantly for cross-module recall. Note: Hardcoded System Knowledge is always active for reasoning.</p>
+                                    <p className="text-slate-500 text-sm max-w-sm leading-relaxed mx-auto">Upload technical documents or logs. SigNify indexes them instantly for cross-module recall.</p>
                                 </div>
                             </div>
                         ) : (
@@ -218,7 +199,7 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
                             value={chatInput}
                             onChange={(e) => setChatInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleChat())}
-                            placeholder="Query the indexed documents & system knowledge..."
+                            placeholder="Query the indexed documents..."
                             className="w-full pl-8 pr-20 py-5 bg-slate-950 border-2 border-slate-800 focus:border-cyan-500 rounded-[32px] outline-none transition-all font-bold text-lg placeholder:text-slate-700"
                             rows={1}
                         />
@@ -261,7 +242,6 @@ export const NeuralVaultPage: React.FC<PageProps> = ({ isOnline, currentUserEmai
                     <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden shadow-inner">
                         <div className={`h-full transition-all duration-1000 ${memoryUsage > 80 ? 'bg-red-500' : 'bg-cyan-500'}`} style={{ width: `${memoryUsage}%` }}></div>
                     </div>
-                    <p className="mt-3 text-[8px] text-slate-600 uppercase tracking-tighter">System Knowledge stories are hardcoded and do not count towards storage limits.</p>
                 </div>
             </div>
         </div>
