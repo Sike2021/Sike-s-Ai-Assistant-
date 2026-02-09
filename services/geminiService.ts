@@ -1,4 +1,4 @@
-import { GoogleGenAI, Modality, Type } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import { Message, TranslatorResponse, NotebookSource, VaultFile, VaultTask, Question, UserAnswer, StudentProfile, ExamReport } from '../types';
 
 const GLOBAL_CAPABILITIES = `
@@ -7,7 +7,8 @@ You are SigNify OS, an integrated educational ecosystem.
 Modules: Neural Reader (SigNify LM), Translator, Creative Studio, Neural Vault.
 `;
 
-const PRIMARY_MODEL = 'gemini-2.5-flash-preview-09-2025';
+// Fix: Updated primary model to gemini-3-flash-preview as per guidelines
+const PRIMARY_MODEL = 'gemini-3-flash-preview';
 const IMAGE_MODEL = 'gemini-2.5-flash-image';
 const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 
@@ -64,7 +65,7 @@ export async function* streamAIChatResponse(
     chatMode: string = 'General',
     userName: string = 'Guest'
 ): AsyncGenerator<{ text?: string }> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const sys = `Persona: SigNify Engine 3.2. Mode: ${chatMode}. User: ${userName}. Language: ${language}.
     ${GLOBAL_CAPABILITIES}${getLinguisticContext()}${getGlobalVaultContext(userEmail)}
     [USER MEMORY] ${userProfileNotes || 'None'}`;
@@ -93,7 +94,7 @@ export async function* streamAIChatResponse(
 }
 
 export async function analyzeVaultFile(file: VaultFile): Promise<{ summary: string, tasks: VaultTask[] }> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: PRIMARY_MODEL,
         contents: `Analyze file: ${file.name}. Content: ${file.content.slice(0, 10000)}`,
@@ -110,7 +111,7 @@ export async function analyzeVaultFile(file: VaultFile): Promise<{ summary: stri
 }
 
 export async function getTranslatorResponse(text: string, sourceLang: string, targetLang: string): Promise<TranslatorResponse> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: PRIMARY_MODEL,
         contents: `Translate from ${sourceLang} to ${targetLang}: "${text}"`,
@@ -123,7 +124,7 @@ export async function getTranslatorResponse(text: string, sourceLang: string, ta
 }
 
 export async function getTranslatorResponseFromImage(base64: string, mimeType: string, sourceLang: string, targetLang: string): Promise<TranslatorResponse> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: PRIMARY_MODEL,
         contents: [
@@ -138,7 +139,7 @@ export async function getTranslatorResponseFromImage(base64: string, mimeType: s
 }
 
 export async function generateGeminiTTS(text: string, voice: string = 'Kore', emotion: string = 'Neutral'): Promise<string | undefined> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: TTS_MODEL,
         contents: [{ parts: [{ text: `Say with ${emotion} tone: ${text}` }] }],
@@ -151,7 +152,7 @@ export async function generateGeminiTTS(text: string, voice: string = 'Kore', em
 }
 
 export async function generateMultiSpeakerTTS(text: string, v1: string, v2: string): Promise<string | undefined> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: TTS_MODEL,
         contents: [{ parts: [{ text }] }],
@@ -171,14 +172,14 @@ export async function generateMultiSpeakerTTS(text: string, v1: string, v2: stri
 }
 
 export async function generateNanoBananaImage(prompt: string, aspectRatio: string = "1:1"): Promise<string | undefined> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: IMAGE_MODEL,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: { imageConfig: { aspectRatio } }
     });
     const candidates = response.candidates;
-    if (candidates && candidates.length > 0 && candidates[0].content.parts) {
+    if (candidates && candidates.length > 0 && candidates[0].content && candidates[0].content.parts) {
         for (const part of candidates[0].content.parts) {
             if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
         }
@@ -201,7 +202,7 @@ export async function* streamVaultChatResponse(p: string, h: Message[], l: strin
 }
 
 export async function generateNotebookOverview(sources: NotebookSource[], duration: number): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: PRIMARY_MODEL,
         contents: `Create a ${duration} minute podcast script for these sources: ${sources.map(s => s.name).join(', ')}`,
@@ -211,7 +212,7 @@ export async function generateNotebookOverview(sources: NotebookSource[], durati
 }
 
 export async function generateConversationTitle(prompt: string, response: string): Promise<string> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const result = await ai.models.generateContent({
         model: PRIMARY_MODEL,
         contents: `Summarize in 3 words: User: ${prompt}. Bot: ${response}`
@@ -219,36 +220,8 @@ export async function generateConversationTitle(prompt: string, response: string
     return (result.text || "").trim() || "New Comms";
 }
 
-export async function generateExamQuestions(subject: string, chapter: string, examType: string, languages: string[]): Promise<Question[]> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Generate a set of 5 ${examType} questions for ${subject}, specifically on ${chapter} in: ${languages.join(', ')}.`,
-        config: {
-            responseMimeType: 'application/json',
-            systemInstruction: `Return JSON: [ { "question": string, "type": "MCQ" | "SHORT" | "LONG", "options": ["o1","o2","o3","o4"], "modelAnswer": string } ]`
-        }
-    });
-    return JSON.parse(response.text || '[]');
-}
-
-export async function evaluateExamAnswers(questions: Question[], userAnswers: UserAnswer[], studentInfo: StudentProfile, examSetup: any): Promise<ExamReport> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Evaluate exam for ${studentInfo.name}. Questions: ${JSON.stringify(questions)} User Answers: ${JSON.stringify(userAnswers)}`,
-        config: {
-            responseMimeType: 'application/json',
-            systemInstruction: `Return JSON ExamReport with score, percentage, grade, and breakdown.`
-        }
-    });
-    const report = JSON.parse(response.text || '{}');
-    report.id = Date.now().toString();
-    return report;
-}
-
 export async function getVerbsByInitial(initial: string): Promise<string[]> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: PRIMARY_MODEL,
         contents: `List 20 common English verbs starting with '${initial}'.`,
@@ -258,7 +231,7 @@ export async function getVerbsByInitial(initial: string): Promise<string[]> {
 }
 
 export async function getVerbDetails(verb: string, language: string): Promise<any> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({
         model: PRIMARY_MODEL,
         contents: `Provide details for '${verb}' in ${language}.`,
@@ -268,4 +241,47 @@ export async function getVerbDetails(verb: string, language: string): Promise<an
         }
     });
     return JSON.parse(response.text || '{}');
+}
+
+// Fix: Added missing service functions for Exam module using gemini-3-pro-preview for complex reasoning
+export async function generateExamQuestions(subject: string, chapter: string, examType: string, languages: string[]): Promise<Question[]> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    const prompt = `Create an exam for ${subject} on ${chapter}. Exam Type: ${examType}. Languages: ${languages.join(', ')}.`;
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            systemInstruction: `You are an expert examiner. Generate 10 high-quality questions. 
+            For MCQ type, provide 4 distinct options.
+            Return JSON array: [{ "question": "Question in languages requested", "type": "MCQ"|"SHORT"|"LONG", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": "Correct Option or Key" }]`
+        }
+    });
+    return JSON.parse(response.text || '[]');
+}
+
+export async function evaluateExamAnswers(questions: Question[], userAnswers: UserAnswer[], studentInfo: StudentProfile, examSetup: any): Promise<ExamReport> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    const prompt = `Grade this exam for ${studentInfo.name}. 
+    Setup: ${JSON.stringify(examSetup)}
+    Questions: ${JSON.stringify(questions)}
+    Answers: ${JSON.stringify(userAnswers)}`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            systemInstruction: `You are an expert grader. Return a JSON object matching the ExamReport interface.
+            Calculate marks, percentage, and grade. Provide helpful feedback for each question.`
+        }
+    });
+
+    const results = JSON.parse(response.text || '{}');
+    return {
+        id: Date.now().toString(),
+        studentInfo,
+        examSetup,
+        results
+    };
 }

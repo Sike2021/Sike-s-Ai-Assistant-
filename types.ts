@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   text: string;
@@ -41,12 +40,12 @@ export type SubscriptionTier = 'free' | 'study' | 'pro';
 export interface UserProfile {
   name: string;
   email: string;
-  picture?: string; // From Google Sign-In
+  picture?: string;
   notes?: string;
   lastActive?: number;
   subscription?: {
     tier: SubscriptionTier;
-    expiry: number; // Timestamp
+    expiry: number;
   };
 }
 
@@ -64,72 +63,73 @@ export interface TranslatorResponse {
 }
 
 export interface GrammarEvaluation {
-  rating: number; // A score out of 10
-  feedback: string; // Detailed feedback on the text
-  correctedText: string; // The corrected version of the text
-}
-
-export interface Question {
-  question: string;
-  type: 'MCQ' | 'SHORT' | 'LONG';
-  options?: string[];
-  modelAnswer: string;
-}
-
-export interface UserAnswer {
-  question: string;
-  answer: string;
-}
-
-export interface StudentProfile {
-  name: string;
-  className: string;
-  schoolName: string;
-  rollNo: string;
-}
-
-export interface ExamReport {
-  id:string;
-  studentInfo: StudentProfile;
-  examSetup: {
-    subject: string;
-    chapter: string;
-    examType: string;
-    language: string[];
-    duration: number;
-  };
-  results: {
-    totalMarks: number;
-    marksObtained: number;
-    percentage: number;
-    grade: string;
-    overallFeedback: string;
-    breakdown: {
-      question: string;
-      userAnswer: string;
-      modelAnswer: string;
-      isCorrect: boolean;
-      feedback: string;
-    }[];
-  };
-}
-
-export interface InProgressExamSession {
-  questions: Question[];
-  userAnswers: UserAnswer[];
-  timeLeft: number;
-  studentInfo: StudentProfile;
-  examSetup: {
-    subject: string;
-    chapter: string;
-    examType: string;
-    language: string[];
-    duration: number;
-  };
+  rating: number;
+  feedback: string;
+  correctedText: string;
 }
 
 export interface PageProps {
     isOnline: boolean;
     currentUserEmail?: string | null;
     userProfileNotes?: string;
+}
+
+// Fix: Added missing types for Exam module
+export interface StudentProfile {
+    name: string;
+    className: string;
+    schoolName: string;
+    rollNo: string;
+}
+
+export interface Question {
+    question: string;
+    type: 'MCQ' | 'SHORT' | 'LONG';
+    options?: string[];
+    correctAnswer?: string;
+}
+
+export interface UserAnswer {
+    question: string;
+    answer: string;
+}
+
+export interface ExamReport {
+    id: string;
+    studentInfo: StudentProfile;
+    examSetup: {
+        subject: string;
+        chapter: string;
+        examType: string;
+        language: string[];
+        duration: number;
+    };
+    results: {
+        marksObtained: number;
+        totalMarks: number;
+        percentage: number;
+        grade: string;
+        overallFeedback: string;
+        breakdown: {
+            question: string;
+            userAnswer: string;
+            modelAnswer: string;
+            isCorrect: boolean;
+            feedback: string;
+        }[];
+    };
+}
+
+export interface InProgressExamSession {
+    questions: Question[];
+    userAnswers: UserAnswer[];
+    timeLeft: number;
+    studentInfo: StudentProfile;
+    examSetup: {
+        subject: string;
+        chapter: string;
+        examType: string;
+        language: string[];
+        duration: number;
+    };
 }

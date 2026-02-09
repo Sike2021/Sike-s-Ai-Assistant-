@@ -1,14 +1,15 @@
-
 import { Message, UserProfile, SubscriptionTier } from '../types';
 
 // --- Dynamic Storage Keys ---
 export const getConversationsKey = (email: string | null) => `sikeAiAssistant_conversations_${(email || 'global').replace(/[@.]/g, '_')}`;
 export const getSavedMessagesKey = (email: string | null) => `sikeAiAssistant_savedMessages_${(email || 'global').replace(/[@.]/g, '_')}`;
-export const getExamHistoryKey = (rollNo: string) => `sikeTutorExamHistory_${rollNo}`;
-export const getInProgressExamKey = (rollNo: string) => `sikeTutorInProgressExam_${rollNo}`;
 export const GLOBAL_NOTES_KEY = 'sikeAiAssistant_globalNotes';
 export const SIKE_USERS_KEY = 'sikeAiAssistant_users';
 export const CURRENT_USER_EMAIL_KEY = 'sikeAiAssistant_currentUserEmail';
+
+// Fix: Added missing exam storage keys
+export const getInProgressExamKey = (rollNo: string) => `signify_exam_inprogress_${rollNo}`;
+export const getExamHistoryKey = (rollNo: string) => `signify_exam_history_${rollNo}`;
 
 // --- Subscription System ---
 const VALID_CODES = {
@@ -30,7 +31,6 @@ export const validateSubscriptionCode = (code: string): SubscriptionTier | null 
 };
 
 export const checkFeatureAccess = (pageId: string, currentTier: SubscriptionTier): boolean => {
-    // Unlocked all features for debugging/maintenance as requested.
     return true;
 };
 
@@ -76,33 +76,20 @@ export const createWavBlob = (pcmData: Uint8Array, sampleRate: number = 24000): 
     const header = new ArrayBuffer(44);
     const view = new DataView(header);
 
-    /* RIFF identifier */
     view.setUint32(0, 0x52494646, false);
-    /* file length */
     view.setUint32(4, 36 + pcmData.length, true);
-    /* RIFF type */
     view.setUint32(8, 0x57415645, false);
-    /* format chunk identifier */
     view.setUint32(12, 0x666d7420, false);
-    /* format chunk length */
     view.setUint32(16, 16, true);
-    /* sample format (raw) */
     view.setUint16(20, 1, true);
-    /* channel count */
     view.setUint16(22, 1, true);
-    /* sample rate */
     view.setUint32(24, sampleRate, true);
-    /* byte rate (sample rate * block align) */
     view.setUint32(28, sampleRate * 2, true);
-    /* block align (channel count * bytes per sample) */
     view.setUint16(32, 2, true);
-    /* bits per sample */
     view.setUint16(34, 16, true);
-    /* data chunk identifier */
     view.setUint32(36, 0x64617461, false);
-    /* data chunk length */
     view.setUint32(40, pcmData.length, true);
 
-    // Using buffer explicitly and casting to BlobPart array to satisfy TypeScript
-    return new Blob([new Uint8Array(header), pcmData.buffer as BlobPart], { type: 'audio/wav' });
+    const blobParts: BlobPart[] = [new Uint8Array(header), pcmData];
+    return new Blob(blobParts, { type: 'audio/wav' });
 };
