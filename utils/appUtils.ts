@@ -103,5 +103,6 @@ export const createWavBlob = (pcmData: Uint8Array, sampleRate: number = 24000): 
     /* data chunk length */
     view.setUint32(40, pcmData.length, true);
 
-    return new Blob([header, pcmData], { type: 'audio/wav' });
+    // Using buffer explicitly and casting to BlobPart array to satisfy TypeScript
+    return new Blob([new Uint8Array(header), pcmData.buffer as BlobPart], { type: 'audio/wav' });
 };

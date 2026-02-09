@@ -46,10 +46,10 @@ export default async function handler(req: any, res: any) {
         config: config || {}
       });
       const imagePart = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
-      if (imagePart) {
+      if (imagePart && imagePart.inlineData) {
         return res.status(200).json({ imageUrl: `data:image/png;base64,${imagePart.inlineData.data}` });
       }
-      return res.status(500).json({ error: "Image synthesis failed." });
+      return res.status(500).json({ error: "Image synthesis failed or was blocked." });
     }
 
     const response = await ai.models.generateContent({
@@ -59,7 +59,7 @@ export default async function handler(req: any, res: any) {
     });
 
     return res.status(200).json({
-      text: response.text,
+      text: response.text || "",
       candidates: response.candidates
     });
 

@@ -88,7 +88,7 @@ export async function* streamAIChatResponse(
     });
 
     for await (const chunk of response) {
-        yield { text: chunk.text };
+        yield { text: chunk.text || "" };
     }
 }
 
@@ -102,7 +102,7 @@ export async function analyzeVaultFile(file: VaultFile): Promise<{ summary: stri
             systemInstruction: 'Summarize the file and extract 3 tasks. Return JSON: { "summary": string, "tasks": [{ "text": string, "priority": "high" }] }'
         }
     });
-    const data = JSON.parse(response.text);
+    const data = JSON.parse(response.text || '{"summary":"","tasks":[]}');
     return {
         summary: data.summary || "",
         tasks: (data.tasks || []).map((t: any) => ({ ...t, id: Math.random().toString(), status: 'pending' }))
@@ -119,7 +119,7 @@ export async function getTranslatorResponse(text: string, sourceLang: string, ta
             systemInstruction: 'Return JSON: { "mainTranslation": string, "wordByWord": [{ "original": string, "translation": string }] }'
         }
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '{"mainTranslation":"","wordByWord":[]}');
 }
 
 export async function getTranslatorResponseFromImage(base64: string, mimeType: string, sourceLang: string, targetLang: string): Promise<TranslatorResponse> {
@@ -134,7 +134,7 @@ export async function getTranslatorResponseFromImage(base64: string, mimeType: s
             systemInstruction: 'Return JSON: { "mainTranslation": string, "wordByWord": [{ "original": string, "translation": string }] }'
         }
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '{"mainTranslation":"","wordByWord":[]}');
 }
 
 export async function generateGeminiTTS(text: string, voice: string = 'Kore', emotion: string = 'Neutral'): Promise<string | undefined> {
@@ -177,8 +177,11 @@ export async function generateNanoBananaImage(prompt: string, aspectRatio: strin
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: { imageConfig: { aspectRatio } }
     });
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+    const candidates = response.candidates;
+    if (candidates && candidates.length > 0 && candidates[0].content.parts) {
+        for (const part of candidates[0].content.parts) {
+            if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+        }
     }
     return undefined;
 }
@@ -204,7 +207,7 @@ export async function generateNotebookOverview(sources: NotebookSource[], durati
         contents: `Create a ${duration} minute podcast script for these sources: ${sources.map(s => s.name).join(', ')}`,
         config: { systemInstruction: 'Two speakers (S1 and S2) discussing key insights. Engaging tone.' }
     });
-    return response.text;
+    return response.text || "";
 }
 
 export async function generateConversationTitle(prompt: string, response: string): Promise<string> {
@@ -213,7 +216,7 @@ export async function generateConversationTitle(prompt: string, response: string
         model: PRIMARY_MODEL,
         contents: `Summarize in 3 words: User: ${prompt}. Bot: ${response}`
     });
-    return result.text.trim() || "New Comms";
+    return (result.text || "").trim() || "New Comms";
 }
 
 export async function generateExamQuestions(subject: string, chapter: string, examType: string, languages: string[]): Promise<Question[]> {
@@ -226,7 +229,7 @@ export async function generateExamQuestions(subject: string, chapter: string, ex
             systemInstruction: `Return JSON: [ { "question": string, "type": "MCQ" | "SHORT" | "LONG", "options": ["o1","o2","o3","o4"], "modelAnswer": string } ]`
         }
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '[]');
 }
 
 export async function evaluateExamAnswers(questions: Question[], userAnswers: UserAnswer[], studentInfo: StudentProfile, examSetup: any): Promise<ExamReport> {
@@ -239,7 +242,7 @@ export async function evaluateExamAnswers(questions: Question[], userAnswers: Us
             systemInstruction: `Return JSON ExamReport with score, percentage, grade, and breakdown.`
         }
     });
-    const report = JSON.parse(response.text);
+    const report = JSON.parse(response.text || '{}');
     report.id = Date.now().toString();
     return report;
 }
@@ -251,7 +254,7 @@ export async function getVerbsByInitial(initial: string): Promise<string[]> {
         contents: `List 20 common English verbs starting with '${initial}'.`,
         config: { responseMimeType: 'application/json', systemInstruction: 'Return JSON array of strings.' }
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '[]');
 }
 
 export async function getVerbDetails(verb: string, language: string): Promise<any> {
@@ -264,5 +267,5 @@ export async function getVerbDetails(verb: string, language: string): Promise<an
             systemInstruction: 'Return JSON: { "base": string, "description": string, "past": string, "pastParticiple": string, "nounForm": string, "adjectiveForm": string, "usages": [string] }'
         }
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '{}');
 }

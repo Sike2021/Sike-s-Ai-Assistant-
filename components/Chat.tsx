@@ -34,7 +34,7 @@ export const ChatMessage: React.FC<{ message: Message; language: string; current
   const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const isUser = message.sender === 'user';
   const [isSaved, setIsSaved] = useState(false);
-  const savedMessagesKey = getSavedMessagesKey(currentUserEmail);
+  const savedMessagesKey = getSavedMessagesKey(currentUserEmail || null);
 
   useEffect(() => {
     if (savedMessagesKey && !isUser) {
@@ -71,7 +71,7 @@ export const ChatMessage: React.FC<{ message: Message; language: string; current
 
   const displayableText = useMemo(() => {
       if (isUser) return message.text;
-      let text = message.text.replace(/\/\/\/ SIMULATION_START[\s\S]*?\/\/\/ SIMULATION_END/g, '*(Interactive Simulation loaded in the Lab)*');
+      let text = (message.text || "").replace(/\/\/\/ SIMULATION_START[\s\S]*?\/\/\/ SIMULATION_END/g, '*(Interactive Simulation loaded in the Lab)*');
       return processCitations(text);
   }, [message.text, isUser]);
 
@@ -87,7 +87,7 @@ export const ChatMessage: React.FC<{ message: Message; language: string; current
     if (ttsState !== 'stopped') { stopTTS(); return; }
     setTtsState('loading');
     try {
-        const cleanForAudio = message.text.replace(/\[Source:[^\]]+\]/g, '').replace(/[*#`_]/g, '');
+        const cleanForAudio = (message.text || "").replace(/\[Source:[^\]]+\]/g, '').replace(/[*#`_]/g, '');
         const base64Audio = await generateGeminiTTS(cleanForAudio, activeVoice);
         if (!base64Audio) throw new Error("Synthesis core busy.");
         const pcmData = decode(base64Audio);
@@ -141,7 +141,7 @@ export const ChatMessage: React.FC<{ message: Message; language: string; current
             </span>
             {message.imageUrls && message.imageUrls.length > 0 && (
                 <div className={`grid gap-4 mb-4 ${message.imageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                    {message.imageUrls.map((url, index) => <img key={index} src={url} className="rounded-3xl max-w-full bg-slate-900 border-2 border-slate-100 dark:border-slate-800 shadow-lg" />)}
+                    {message.imageUrls.map((url, index) => <img key={index} src={url} className="rounded-3xl max-w-full bg-slate-900 border-2 border-slate-100 dark:border-slate-800 shadow-lg" alt="transmission" />)}
                 </div>
             )}
             <div className={`prose dark:prose-invert max-w-none text-base leading-relaxed ${langClass}`} dangerouslySetInnerHTML={{ __html: (window as any).marked.parse(displayableText) }} />
@@ -321,7 +321,7 @@ export const ChatComponent: React.FC<{
                         <div className="flex flex-wrap gap-2 mb-3">
                             {attachedImages.map((img, i) => (
                                 <div key={i} className="relative group">
-                                    <img src={`data:${img.mimeType};base64,${img.base64}`} className="h-16 w-16 object-cover rounded-xl border-2 border-cyan-500 shadow-lg" />
+                                    <img src={`data:${img.mimeType};base64,${img.base64}`} className="h-16 w-16 object-cover rounded-xl border-2 border-cyan-500 shadow-lg" alt="attachment" />
                                     <button onClick={() => setAttachedImages(p => p.filter((_, idx) => idx !== i))} className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Icons.X className="h-3 w-3"/></button>
                                 </div>
                             ))}

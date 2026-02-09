@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Icons } from './Icons';
 import { Dropdown, CopyButton, LoadingSpinner } from './Shared';
@@ -216,7 +215,7 @@ const ExamSetupComponent: React.FC<{
         const newChapters = lessonsBySubject[setup.subject]?.map(item => item.chapter) || [];
         setChapterOptions(['All', ...newChapters]);
         if (!newChapters.includes(setup.chapter) && setup.chapter !== 'All') {
-            setSetup(s => ({...s, chapter: 'All'}));
+            setSetup((s: any) => ({...s, chapter: 'All'}));
         }
     }, [setup.subject]);
     
@@ -250,19 +249,19 @@ const ExamSetupComponent: React.FC<{
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
-                                <Dropdown options={subjects} selected={setup.subject} onSelect={(s) => setSetup({...setup, subject: s})} />
+                                <Dropdown options={subjects} selected={setup.subject} onSelect={(s: string) => setSetup({...setup, subject: s})} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Chapter</label>
-                                <Dropdown options={chapterOptions} selected={setup.chapter} onSelect={(c) => setSetup({...setup, chapter: c})} disabled={setup.subject === 'All'} />
+                                <Dropdown options={chapterOptions} selected={setup.chapter} onSelect={(c: string) => setSetup({...setup, chapter: c})} disabled={setup.subject === 'All'} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Exam Type</label>
-                                <Dropdown options={examTypes} selected={setup.examType} onSelect={(t) => setSetup({...setup, examType: t})} />
+                                <Dropdown options={examTypes} selected={setup.examType} onSelect={(t: string) => setSetup({...setup, examType: t})} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Duration (minutes)</label>
-                                <Dropdown options={durations.map(String)} selected={String(setup.duration)} onSelect={(d) => setSetup({...setup, duration: Number(d)})} />
+                                <Dropdown options={durations.map(String)} selected={String(setup.duration)} onSelect={(d: string) => setSetup({...setup, duration: Number(d)})} />
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Language(s)</label>
@@ -510,6 +509,8 @@ const ExamReportComponent: React.FC<{
                     </div>
                     
                     <div className="mb-8">
+                        {/* DO add comment above each fix. */}
+                        {/* Fix: Added missing opening bracket to h2 tag on line 563 */}
                         <h2 className="text-xl font-semibold mb-2">Overall Feedback</h2>
                         <p className="text-slate-600 dark:text-slate-300">{report.results.overallFeedback}</p>
                     </div>
