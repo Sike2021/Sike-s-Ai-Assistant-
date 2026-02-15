@@ -24,7 +24,8 @@ export default async function handler(req: any, res: any) {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const targetModel = model || 'gemini-2.5-flash-preview-09-2025';
+    // Standardizing on 'gemini-flash-latest' for the proxy to ensure high availability
+    const targetModel = model || 'gemini-flash-latest';
 
     if (type === 'tts') {
       const response = await ai.models.generateContent({
@@ -67,7 +68,7 @@ export default async function handler(req: any, res: any) {
     console.error("Proxy Error:", error.message);
     const status = error.message?.includes('429') ? 429 : 500;
     return res.status(status).json({ 
-      error: status === 429 ? "Quota exhausted. Retrying in 60s..." : error.message 
+      error: status === 429 ? "Quota exhausted. Retrying in 60s..." : `Handshake Error: ${error.message}` 
     });
   }
 }

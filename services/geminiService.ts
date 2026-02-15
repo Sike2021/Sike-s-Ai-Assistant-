@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Message, TranslatorResponse, NotebookSource, VaultFile, VaultTask, Question, UserAnswer, ExamReport } from '../types';
 
@@ -9,11 +8,11 @@ Modules: Neural Reader (SigNify LM), Translator, Creative Studio, Neural Vault.
 `;
 
 /**
- * 2025 MODEL STANDARDS
- * PRIMARY_MODEL: Optimized for speed and general tasks.
- * PRO_MODEL: Optimized for complex reasoning, math, and coding.
+ * 2025 COMPATIBILITY STANDARDS
+ * PRIMARY_MODEL: Using 'gemini-flash-latest' for maximum compatibility across all API key tiers.
+ * PRO_MODEL: Using 'gemini-3-pro-preview' for advanced reasoning.
  */
-const PRIMARY_MODEL = 'gemini-3-flash-preview';
+const PRIMARY_MODEL = 'gemini-flash-latest';
 const PRO_MODEL = 'gemini-3-pro-preview';
 const IMAGE_MODEL = 'gemini-2.5-flash-image';
 const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
@@ -30,11 +29,14 @@ async function withStability<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
         } catch (err: any) {
             lastErr = err;
             const msg = (err?.message || String(err)).toLowerCase();
-            const isRetryable = msg.includes("429") || msg.includes("quota") || msg.includes("503") || msg.includes("500") || msg.includes("deadline");
+            // Retry on quota, service busy, or common transient network resets
+            const isRetryable = msg.includes("429") || msg.includes("quota") || msg.includes("503") || 
+                               msg.includes("500") || msg.includes("deadline") || msg.includes("fetch") ||
+                               msg.includes("network");
 
             if (isRetryable && i < retries) {
                 const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                console.warn(`SigNify Stability Protocol: Retry ${i + 1}/${retries} after ${Math.round(delay)}ms`);
+                console.warn(`SigNify Stability Protocol: Retry ${i + 1}/${retries} after ${Math.round(delay)}ms. Reason: ${msg}`);
                 await new Promise(r => setTimeout(r, delay));
                 continue;
             }
@@ -97,7 +99,13 @@ export async function* streamAIChatResponse(
     chatMode: string = 'General',
     userName: string = 'Guest'
 ): AsyncGenerator<{ text?: string, error?: string }> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        yield { error: "Security Error: Logic core API key is missing. Check environment configuration." };
+        return;
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
     const sys = `Persona: SigNify Engine 3.2. Mode: ${chatMode}. User: ${userName}. Language: ${language}.
     ${GLOBAL_CAPABILITIES}${getLinguisticContext()}${getGlobalVaultContext(userEmail)}
     [USER MEMORY] ${userProfileNotes || 'None'}`;
@@ -127,12 +135,15 @@ export async function* streamAIChatResponse(
     } catch (err: any) {
         console.error("SigNify Logic Core Exception:", err);
         const msg = (err?.message || String(err)).toLowerCase();
+        
         if (msg.includes("429") || msg.includes("quota") || msg.includes("exhausted")) {
-            yield { error: "Neural Bandwidth Saturated (Quota Limit). The logic core is stabilizing. Please wait 30-60 seconds before re-initiating handshake." };
+            yield { error: "Neural Bandwidth Saturated: The API quota for this key has been reached. Please wait 60 seconds." };
+        } else if (msg.includes("model") && (msg.includes("not found") || msg.includes("permission"))) {
+            yield { error: "Compatibility Error: The selected model is not supported by your current API key permissions." };
         } else if (!navigator.onLine) {
-            yield { error: "Transmission Interrupted. Local network connectivity lost." };
+            yield { error: "Transmission Interrupted: Your local network connectivity has been lost." };
         } else {
-            yield { error: "Stability Error: Neural handshake failed. This occurs on hosted environments due to transient network resets. Please refresh and retry." };
+            yield { error: "Handshake Failure: A transient network reset occurred on the hosting platform. Please try again." };
         }
     }
 }
@@ -466,7 +477,7 @@ export async function generateNotebookOverview(sources: NotebookSource[], durati
 
     return await withStability(async () => {
         const response = await ai.models.generateContent({
-            model: PRO_MODEL,
+            model: PRIMARY_MODEL,
             contents: prompt,
             config: { systemInstruction: "Expert educational scriptwriter." }
         });
