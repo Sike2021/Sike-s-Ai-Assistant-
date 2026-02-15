@@ -107,16 +107,18 @@ export const ChatMessage: React.FC<{ message: Message; language: string; current
   const voiceOptions = ['Kore', 'Zephyr', 'Fenrir', 'Puck'];
   const voiceDisplayMap = { Kore: 'Clear Male', Zephyr: 'Warm Male', Fenrir: 'Deep Male', Puck: 'Bright Male' };
   
+  const isError = message.text.startsWith('/// SYSTEM ERROR:');
+
   return (
     <div className={`flex items-start gap-4 mt-8 ${isUser ? 'justify-end' : ''}`} data-is-bot-message={!isUser}>
       {!isUser && (
-        <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 text-cyan-400 shadow-2xl border border-slate-700 transform -rotate-3 transition-transform hover:rotate-0">
-          <Icons.Sparkles className="h-7 w-7" />
+        <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br ${isError ? 'from-red-800 to-slate-950 text-red-400' : 'from-slate-800 to-slate-950 text-cyan-400'} shadow-2xl border border-slate-700 transform -rotate-3 transition-transform hover:rotate-0`}>
+          {isError ? <Icons.AlertTriangle className="h-7 w-7" /> : <Icons.Sparkles className="h-7 w-7" />}
         </div>
       )}
       <div className={`max-w-2xl flex flex-col ${isUser ? 'items-end' : 'items-start'} w-full`}>
          <div className={`flex flex-wrap items-center gap-2 mb-2 w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
-            {!isUser && (
+            {!isUser && !isError && (
                 <div className="flex items-center gap-1 p-1 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-slate-800 shadow-sm scale-90">
                     <button onClick={handleTTS} className={`p-1.5 rounded-full transition-colors ${ttsState === 'playing' ? 'text-red-500 hover:bg-red-50' : 'text-cyan-600 hover:bg-cyan-50'}`}>
                         {ttsState === 'loading' ? <Icons.Spinner className="h-4 w-4 animate-spin" /> : ttsState === 'playing' ? <Icons.Stop className="h-4 w-4" /> : <Icons.Play className="h-4 w-4" />}
@@ -128,16 +130,16 @@ export const ChatMessage: React.FC<{ message: Message; language: string; current
             )}
             <div className="flex items-center gap-1 scale-90">
                 <CopyButton textToCopy={message.text} />
-                {!isUser && (
+                {!isUser && !isError && (
                     <button onClick={handleSaveMessage} className={`p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-800 ${isSaved ? 'text-cyan-500' : 'text-slate-400'}`}>
                         {isSaved ? <Icons.BookmarkCheck className="h-4 w-4" /> : <Icons.Bookmark className="h-4 w-4" />}
                     </button>
                 )}
             </div>
          </div>
-         <div className={`group relative p-6 rounded-[32px] w-full transition-all duration-300 shadow-2xl ${isUser ? 'bg-cyan-600 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800/80 border-l-[6px] border-cyan-500 dark:text-slate-100 rounded-tl-none'}`}>
-            <span className={`absolute -top-3 ${isUser ? 'right-4' : 'left-4'} text-[9px] font-black font-commander uppercase tracking-[0.3em] bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm text-cyan-600 dark:text-cyan-400`}>
-                {isUser ? 'Authorized User' : 'SigNify OS • Intelligence'}
+         <div className={`group relative p-6 rounded-[32px] w-full transition-all duration-300 shadow-2xl ${isUser ? 'bg-cyan-600 text-white rounded-tr-none' : isError ? 'bg-red-50 dark:bg-red-900/10 border-l-[6px] border-red-500 text-red-700 dark:text-red-300 rounded-tl-none' : 'bg-white dark:bg-slate-800/80 border-l-[6px] border-cyan-500 dark:text-slate-100 rounded-tl-none'}`}>
+            <span className={`absolute -top-3 ${isUser ? 'right-4' : 'left-4'} text-[9px] font-black font-commander uppercase tracking-[0.3em] bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm ${isError ? 'text-red-600' : 'text-cyan-600 dark:text-cyan-400'}`}>
+                {isUser ? 'Authorized User' : isError ? 'System Failure' : 'SigNify OS • Intelligence'}
             </span>
             {message.imageUrls && message.imageUrls.length > 0 && (
                 <div className={`grid gap-4 mb-4 ${message.imageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -190,7 +192,7 @@ export const ChatComponent: React.FC<{
         const vault = localStorage.getItem(vaultKey);
         if (vault) setVaultFiles(JSON.parse(vault).files || []);
 
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitRecognition;
         if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition();
             recognitionRef.current.continuous = false;
@@ -237,6 +239,7 @@ export const ChatComponent: React.FC<{
             const stream = aiStreamFunction(currentInput, messages, language, currentImages, currentUserEmail, userProfileNotes);
             let fullText = '';
             for await (const chunk of stream) {
+                if (chunk.error) throw new Error(chunk.error);
                 if (chunk.text) {
                     fullText += chunk.text;
                     setMessages(prev => {
@@ -253,7 +256,8 @@ export const ChatComponent: React.FC<{
             saveToLinguisticMemory(fullText);
             saveToLinguisticMemory(currentInput);
         } catch (err: any) {
-            setMessages(prev => prev.map(m => m.id === botMsg.id ? { ...m, text: "Transmission error. Check bandwidth." } : m));
+            const errorMsg = err?.message || "Transmission timed out.";
+            setMessages(prev => prev.map(m => m.id === botMsg.id ? { ...m, text: `/// SYSTEM ERROR: ${errorMsg}` } : m));
         } finally { setIsLoading(false); }
     };
 
@@ -310,7 +314,7 @@ export const ChatComponent: React.FC<{
                     {messages.map(m => (
                         <ChatMessage key={m.id} message={m} language={language} currentUserEmail={currentUserEmail} />
                     ))}
-                    {isLoading && <LoadingSpinner label="Indexing context & reasoning..." />}
+                    {isLoading && <LoadingSpinner label="Broadcasting to Logic Core..." />}
                     <div ref={messagesEndRef} />
                 </div>
             </div>

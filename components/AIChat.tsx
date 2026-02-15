@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Icons } from './Icons';
 import { Dropdown, CameraModal, LoadingSpinner } from './Shared';
@@ -48,6 +49,7 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
         if ((!input.trim() && attachedImages.length === 0) || isLoading || !isOnline) return;
         let convoId = currentConversationId || Date.now().toString();
         if (!currentConversationId) setCurrentConversationId(convoId);
+        
         const userMsg: Message = { id: Date.now().toString(), text: input, sender: 'user' };
         if (attachedImages.length > 0) userMsg.imageUrls = attachedImages.map(img => `data:${img.mimeType};base64,${img.base64}`);
         const botMsg: Message = { id: (Date.now() + 1).toString(), text: '', sender: 'bot' };
@@ -65,25 +67,31 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
         });
 
         const history = currentMessages;
-        const currentInput = input; setInput(''); setAttachedImages([]); setIsLoading(true);
+        const currentInput = input;
+        setInput(''); setAttachedImages([]); setIsLoading(true);
+        
         try {
             const stream = streamAIChatResponse(currentInput, history, "English", attachedImages, currentUserEmail, userProfileNotes, chatMode, userName);
             let acc = "";
             for await (const chunk of stream) {
-                if (chunk.text) acc += chunk.text;
-                setConversations(prev => {
-                    const up = prev.map(c => c.id === convoId ? { ...c, messages: c.messages.map(m => m.id === botMsg.id ? { ...m, text: acc } : m) } : c);
-                    if (convKey) localStorage.setItem(convKey, JSON.stringify(up));
-                    return up;
-                });
+                if (chunk.error) throw new Error(chunk.error);
+                if (chunk.text) {
+                    acc += chunk.text;
+                    setConversations(prev => {
+                        const up = prev.map(c => c.id === convoId ? { ...c, messages: c.messages.map(m => m.id === botMsg.id ? { ...m, text: acc } : m) } : c);
+                        if (convKey) localStorage.setItem(convKey, JSON.stringify(up));
+                        return up;
+                    });
+                }
             }
             if (conversations.find(c => c.id === convoId)?.title === 'New Transmission') {
                 generateConversationTitle(currentInput, acc).then(t => setConversations(p => p.map(c => c.id === convoId ? { ...c, title: t } : c)));
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Transmission Error:", err);
+            const errorMsg = err?.message || "SigNify logic core saturated. Check neural bandwidth.";
             setConversations(prev => {
-                const up = prev.map(c => c.id === convoId ? { ...c, messages: c.messages.map(m => m.id === botMsg.id ? { ...m, text: "Stability error. Bandwidth check failed." } : m) } : c);
+                const up = prev.map(c => c.id === convoId ? { ...c, messages: c.messages.map(m => m.id === botMsg.id ? { ...m, text: `/// SYSTEM ERROR: ${errorMsg}` } : m) } : c);
                 return up;
             });
         } finally { setIsLoading(false); }
@@ -137,15 +145,15 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                         {currentMessages.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center py-20 text-center">
                                 <div className="p-6 bg-cyan-600/5 rounded-[40px] border border-cyan-500/10 mb-6">
-                                    <LoadingSpinner size="60px" label="2.5 Flash Engine Ready" />
+                                    <LoadingSpinner size="60px" label="3.2 Logic Core Online" />
                                 </div>
                                 <h2 className="text-2xl font-black font-commander uppercase tracking-tighter mt-4 dark:text-white">SigNify OS 3.2</h2>
-                                <p className="text-slate-500 text-sm mt-2 max-w-xs mx-auto font-medium">Neural handshake established. Systems online for {userName}.</p>
+                                <p className="text-slate-500 text-sm mt-2 max-w-xs mx-auto font-medium">Handshake established. Systems online for {userName}.</p>
                             </div>
                         ) : (
                             <div className="space-y-6">
                                 {currentMessages.map(m => <ChatMessage key={m.id} message={m} language="English" currentUserEmail={currentUserEmail} />)}
-                                {isLoading && <div className="py-10"><LoadingSpinner label="Engine Reasoning..." /></div>}
+                                {isLoading && <div className="py-10"><LoadingSpinner label="Handshake in progress..." /></div>}
                             </div>
                         )}
                         <div ref={messagesEndRef} className="h-20" />
@@ -170,12 +178,12 @@ export const AIChatPage: React.FC<PageProps & { userProfileNotes?: string }> = (
                                     value={input} 
                                     onChange={(e) => setInput(e.target.value)} 
                                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmit())} 
-                                    placeholder="Type instructions..." 
+                                    placeholder="Initiate transmission..." 
                                     className="w-full pl-6 pr-12 py-5 bg-slate-100 dark:bg-slate-800/80 rounded-[28px] border-2 border-transparent focus:border-cyan-500 outline-none transition-all font-bold text-base resize-none max-h-40 overflow-y-auto text-slate-800 dark:text-white" 
                                     rows={1} 
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                    <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-cyan-500"><Icons.Paperclip className="h-5 w-5" /></button>
+                                    <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-cyan-500 transition-colors"><Icons.Paperclip className="h-5 w-5" /></button>
                                 </div>
                             </div>
                             <button onClick={() => setIsCameraOpen(true)} className="p-5 bg-slate-100 dark:bg-slate-800 rounded-3xl text-slate-500 active:scale-90 transition-all"><Icons.Camera className="h-5 w-5" /></button>

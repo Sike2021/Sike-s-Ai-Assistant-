@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Message, TranslatorResponse, NotebookSource, VaultFile, VaultTask, Question, UserAnswer, ExamReport } from '../types';
 
 const GLOBAL_CAPABILITIES = `
@@ -8,9 +8,41 @@ You are SigNify OS, an integrated educational ecosystem.
 Modules: Neural Reader (SigNify LM), Translator, Creative Studio, Neural Vault.
 `;
 
+/**
+ * 2025 MODEL STANDARDS
+ * PRIMARY_MODEL: Optimized for speed and general tasks.
+ * PRO_MODEL: Optimized for complex reasoning, math, and coding.
+ */
 const PRIMARY_MODEL = 'gemini-3-flash-preview';
+const PRO_MODEL = 'gemini-3-pro-preview';
 const IMAGE_MODEL = 'gemini-2.5-flash-image';
 const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
+
+/**
+ * NEURAL STABILITY PROTOCOL
+ * Implements exponential backoff to handle 429 (Quota) and transient 5xx errors.
+ */
+async function withStability<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+    let lastErr: any;
+    for (let i = 0; i <= retries; i++) {
+        try {
+            return await fn();
+        } catch (err: any) {
+            lastErr = err;
+            const msg = (err?.message || String(err)).toLowerCase();
+            const isRetryable = msg.includes("429") || msg.includes("quota") || msg.includes("503") || msg.includes("500") || msg.includes("deadline");
+
+            if (isRetryable && i < retries) {
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                console.warn(`SigNify Stability Protocol: Retry ${i + 1}/${retries} after ${Math.round(delay)}ms`);
+                await new Promise(r => setTimeout(r, delay));
+                continue;
+            }
+            throw err;
+        }
+    }
+    throw lastErr;
+}
 
 export function getGlobalVaultContext(userEmail?: string | null): string {
     let context = "\n\n[NEURAL RECALL]";
@@ -55,7 +87,6 @@ export function saveExplicitLinguisticRule(trigger: string, response: string) {
     localStorage.setItem('sike_explicit_linguistic_rules', JSON.stringify(rules));
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
 export async function* streamAIChatResponse(
     prompt: string,
     history: Message[],
@@ -65,7 +96,7 @@ export async function* streamAIChatResponse(
     userProfileNotes?: string,
     chatMode: string = 'General',
     userName: string = 'Guest'
-): AsyncGenerator<{ text?: string }> {
+): AsyncGenerator<{ text?: string, error?: string }> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const sys = `Persona: SigNify Engine 3.2. Mode: ${chatMode}. User: ${userName}. Language: ${language}.
     ${GLOBAL_CAPABILITIES}${getLinguisticContext()}${getGlobalVaultContext(userEmail)}
@@ -83,241 +114,385 @@ export async function* streamAIChatResponse(
     }
     contents.push({ role: 'user', parts: currentParts });
 
-    const response = await ai.models.generateContentStream({
-        model: PRIMARY_MODEL,
-        contents,
-        config: { systemInstruction: sys }
-    });
+    try {
+        const response = await ai.models.generateContentStream({
+            model: PRIMARY_MODEL,
+            contents,
+            config: { systemInstruction: sys }
+        });
 
-    for await (const chunk of response) {
-        yield { text: chunk.text || "" };
+        for await (const chunk of response) {
+            yield { text: chunk.text || "" };
+        }
+    } catch (err: any) {
+        console.error("SigNify Logic Core Exception:", err);
+        const msg = (err?.message || String(err)).toLowerCase();
+        if (msg.includes("429") || msg.includes("quota") || msg.includes("exhausted")) {
+            yield { error: "Neural Bandwidth Saturated (Quota Limit). The logic core is stabilizing. Please wait 30-60 seconds before re-initiating handshake." };
+        } else if (!navigator.onLine) {
+            yield { error: "Transmission Interrupted. Local network connectivity lost." };
+        } else {
+            yield { error: "Stability Error: Neural handshake failed. This occurs on hosted environments due to transient network resets. Please refresh and retry." };
+        }
     }
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
 export async function analyzeVaultFile(file: VaultFile): Promise<{ summary: string, tasks: VaultTask[] }> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Analyze file: ${file.name}. Content: ${file.content.slice(0, 10000)}`,
-        config: { 
-            responseMimeType: 'application/json',
-            systemInstruction: 'Summarize the file and extract 3 tasks. Return JSON: { "summary": string, "tasks": [{ "text": string, "priority": "high" }] }'
-        }
-    });
-    const data = JSON.parse(response.text || '{"summary":"","tasks":[]}');
-    return {
-        summary: data.summary || "",
-        tasks: (data.tasks || []).map((t: any) => ({ ...t, id: Math.random().toString(), status: 'pending' }))
-    };
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: PRIMARY_MODEL,
+                contents: `Analyze file: ${file.name}. Content: ${file.content.slice(0, 15000)}`,
+                config: { 
+                    responseMimeType: 'application/json',
+                    systemInstruction: 'Summarize the file and extract 3 tasks. Return JSON: { "summary": string, "tasks": [{ "text": string, "priority": "high" }] }'
+                }
+            });
+            const data = JSON.parse(response.text || '{"summary":"Analysis failed","tasks":[]}');
+            return {
+                summary: data.summary || "",
+                tasks: (data.tasks || []).map((t: any) => ({ ...t, id: Math.random().toString(), status: 'pending' }))
+            };
+        });
+    } catch (e) {
+        return { summary: "Deep analysis failed due to logic core instability.", tasks: [] };
+    }
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
 export async function getTranslatorResponse(text: string, sourceLang: string, targetLang: string): Promise<TranslatorResponse> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Translate from ${sourceLang} to ${targetLang}: "${text}"`,
-        config: { 
-            responseMimeType: 'application/json',
-            systemInstruction: 'Return JSON: { "mainTranslation": string, "wordByWord": [{ "original": string, "translation": string }] }'
-        }
+    return withStability(async () => {
+        const response = await ai.models.generateContent({
+            model: PRIMARY_MODEL,
+            contents: `Translate from ${sourceLang} to ${targetLang}: "${text}"`,
+            config: { 
+                responseMimeType: 'application/json',
+                systemInstruction: 'Return JSON: { "mainTranslation": string, "wordByWord": [{ "original": string, "translation": string }] }'
+            }
+        });
+        return JSON.parse(response.text || '{"mainTranslation":"","wordByWord":[]}');
     });
-    return JSON.parse(response.text || '{"mainTranslation":"","wordByWord":[]}');
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
 export async function getTranslatorResponseFromImage(base64: string, mimeType: string, sourceLang: string, targetLang: string): Promise<TranslatorResponse> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: [
-            { role: 'user', parts: [{ inlineData: { data: base64, mimeType } }, { text: `Extract text and translate from ${sourceLang} to ${targetLang}.` }] }
-        ],
-        config: { 
-            responseMimeType: 'application/json',
-            systemInstruction: 'Return JSON: { "mainTranslation": string, "wordByWord": [{ "original": string, "translation": string }] }'
-        }
+    return withStability(async () => {
+        const response = await ai.models.generateContent({
+            model: PRIMARY_MODEL,
+            contents: [
+                { role: 'user', parts: [{ inlineData: { data: base64, mimeType } }, { text: `Extract text and translate from ${sourceLang} to ${targetLang}.` }] }
+            ],
+            config: { 
+                responseMimeType: 'application/json',
+                systemInstruction: 'Return JSON: { "mainTranslation": string, "wordByWord": [{ "original": string, "translation": string }] }'
+            }
+        });
+        return JSON.parse(response.text || '{"mainTranslation":"","wordByWord":[]}');
     });
-    return JSON.parse(response.text || '{"mainTranslation":"","wordByWord":[]}');
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
 export async function generateGeminiTTS(text: string, voice: string = 'Kore', emotion: string = 'Neutral'): Promise<string | undefined> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: TTS_MODEL,
-        contents: [{ parts: [{ text: `Say with ${emotion} tone: ${text}` }] }],
-        config: {
-            responseModalities: [Modality.AUDIO],
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
-        }
-    });
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: TTS_MODEL,
+                contents: [{ parts: [{ text: `Say with ${emotion} tone: ${text}` }] }],
+                config: {
+                    responseModalities: [Modality.AUDIO],
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
+                }
+            });
+            return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        });
+    } catch (e) {
+        console.error("TTS Core Error:", e);
+        return undefined;
+    }
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
 export async function generateMultiSpeakerTTS(text: string, v1: string, v2: string): Promise<string | undefined> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: TTS_MODEL,
-        contents: [{ parts: [{ text }] }],
-        config: {
-            responseModalities: [Modality.AUDIO],
-            speechConfig: {
-                multiSpeakerVoiceConfig: {
-                    speakerVoiceConfigs: [
-                        { speaker: 'S1', voiceConfig: { prebuiltVoiceConfig: { voiceName: v1 } } },
-                        { speaker: 'S2', voiceConfig: { prebuiltVoiceConfig: { voiceName: v2 } } }
-                    ]
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: TTS_MODEL,
+                contents: [{ parts: [{ text: text }] }],
+                config: {
+                    responseModalities: [Modality.AUDIO],
+                    speechConfig: {
+                        multiSpeakerVoiceConfig: {
+                            speakerVoiceConfigs: [
+                                { speaker: 'Speaker1', voiceConfig: { prebuiltVoiceConfig: { voiceName: v1 } } },
+                                { speaker: 'Speaker2', voiceConfig: { prebuiltVoiceConfig: { voiceName: v2 } } }
+                            ]
+                        }
+                    }
                 }
-            }
-        }
-    });
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-}
-
-// Fixed: Google GenAI initialization follows strict guidelines
-export async function generateNanoBananaImage(prompt: string, aspectRatio: string = "1:1"): Promise<string | undefined> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: IMAGE_MODEL,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: { imageConfig: { aspectRatio } }
-    });
-    const candidates = response.candidates;
-    if (candidates && candidates.length > 0) {
-        const firstCandidate = candidates[0];
-        if (firstCandidate.content && firstCandidate.content.parts) {
-            for (const part of firstCandidate.content.parts) {
-                if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-            }
-        }
+            });
+            return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        });
+    } catch (e) {
+        console.error("Multi-Speaker TTS Error:", e);
+        return undefined;
     }
-    return undefined;
 }
 
-export async function* streamCreativeResponse(p: string, h: Message[], l: string, img: any, e: any, n: any) {
-    yield* streamAIChatResponse(p, h, l, img, e, n, `Creative Studio Director`);
+export async function* streamCreativeResponse(
+    prompt: string,
+    history: Message[],
+    language: string,
+    images: { base64: string; mimeType: string }[] = [],
+    userEmail?: string | null,
+    userProfileNotes?: string
+): AsyncGenerator<{ text?: string, error?: string }> {
+    yield* streamAIChatResponse(prompt, history, language, images, userEmail, userProfileNotes, 'Creative Studio Director');
 }
 
-export async function* streamNotebookChatResponse(p: string, h: Message[], l: string, sourcesInput: NotebookSource[], e: any, n: any) {
-    const context = sourcesInput.map(src => `[SOURCE: ${src.name}]\n${src.content.slice(0, 2000)}`).join('\n\n');
-    yield* streamAIChatResponse(p, h, l, [], e, (n || "") + "\n\n" + context, 'LM Studio Researcher');
-}
-
-export async function* streamVaultChatResponse(p: string, h: Message[], l: string, vaultFilesInput: VaultFile[], e: any, n: any) {
-    const context = vaultFilesInput.map(f => `[VAULT_FILE: ${f.name}]\n${f.content.slice(0, 2000)}`).join('\n\n');
-    yield* streamAIChatResponse(p, h, l, [], e, (n || "") + "\n\n" + context, 'Neural Guardian');
-}
-
-// Fixed: Google GenAI initialization follows strict guidelines
-export async function generateNotebookOverview(sources: NotebookSource[], duration: number): Promise<string> {
+export async function generateNanoBananaImage(prompt: string): Promise<string | undefined> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Create a ${duration} minute podcast script for these sources: ${sources.map(s => s.name).join(', ')}`,
-        config: { systemInstruction: 'Two speakers (S1 and S2) discussing key insights. Engaging tone.' }
-    });
-    return response.text || "";
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: IMAGE_MODEL,
+                contents: { parts: [{ text: prompt }] },
+                config: { imageConfig: { aspectRatio: "1:1" } }
+            });
+            const part = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+            if (part && part.inlineData) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
+            return undefined;
+        });
+    } catch (e) {
+        console.error("Image Synthesis Error:", e);
+        return undefined;
+    }
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
-export async function generateConversationTitle(prompt: string, response: string): Promise<string> {
+export async function generateConversationTitle(userMsg: string, botMsg: string): Promise<string> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const result = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Summarize in 3 words: User: ${prompt}. Bot: ${response}`
-    });
-    return (result.text || "").trim() || "New Comms";
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: PRIMARY_MODEL,
+                contents: `Generate a very short (3-5 words) title for this conversation. User: ${userMsg.substring(0, 100)}. Bot: ${botMsg.substring(0, 100)}`,
+                config: { systemInstruction: "You are a helpful assistant. Return only the title text, no quotes." }
+            });
+            return response.text?.trim() || "New Transmission";
+        });
+    } catch (e) {
+        return "New Transmission";
+    }
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
+export async function generateExamQuestions(subject: string, chapter: string, type: string, languages: string[]): Promise<Question[]> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const prompt = `Generate 5 challenging questions for a ${subject} exam on ${chapter}. Exam Type: ${type}. Supported Languages: ${languages.join(', ')}.`;
+    
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: PRIMARY_MODEL,
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                question: { type: Type.STRING },
+                                type: { type: Type.STRING },
+                                options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                modelAnswer: { type: Type.STRING }
+                            },
+                            required: ["question", "type"]
+                        }
+                    }
+                }
+            });
+            return JSON.parse(response.text || "[]");
+        });
+    } catch (e) {
+        console.error("Exam Generation Error:", e);
+        return [];
+    }
+}
+
+export async function evaluateExamAnswers(questions: Question[], answers: UserAnswer[], profile: any, setup: any): Promise<ExamReport> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const prompt = `Evaluate the following student's exam. 
+    Questions: ${JSON.stringify(questions)}
+    Answers: ${JSON.stringify(answers)}
+    Student: ${JSON.stringify(profile)}
+    Exam Info: ${JSON.stringify(setup)}`;
+    
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: PRO_MODEL,
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            results: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    marksObtained: { type: Type.NUMBER },
+                                    totalMarks: { type: Type.NUMBER },
+                                    percentage: { type: Type.NUMBER },
+                                    grade: { type: Type.STRING },
+                                    overallFeedback: { type: Type.STRING },
+                                    breakdown: {
+                                        type: Type.ARRAY,
+                                        items: {
+                                            type: Type.OBJECT,
+                                            properties: {
+                                                question: { type: Type.STRING },
+                                                userAnswer: { type: Type.STRING },
+                                                modelAnswer: { type: Type.STRING },
+                                                isCorrect: { type: Type.BOOLEAN },
+                                                feedback: { type: Type.STRING }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            const result = JSON.parse(response.text || "{}");
+            return {
+                id: Date.now().toString(),
+                studentInfo: profile,
+                examSetup: setup,
+                results: result.results
+            };
+        });
+    } catch (e) {
+        console.error("Evaluation Error:", e);
+        throw e;
+    }
+}
+
 export async function getVerbsByInitial(initial: string): Promise<string[]> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `List 20 common English verbs starting with '${initial}'.`,
-        config: { responseMimeType: 'application/json', systemInstruction: 'Return JSON array of strings.' }
-    });
-    return JSON.parse(response.text || '[]');
-}
-
-// Fixed: Google GenAI initialization follows strict guidelines
-export async function getVerbDetails(verb: string, language: string): Promise<any> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Provide details for '${verb}' in ${language}.`,
-        config: {
-            responseMimeType: 'application/json',
-            systemInstruction: 'Return JSON: { "base": string, "description": string, "past": string, "pastParticiple": string, "nounForm": string, "adjectiveForm": string, "usages": [string] }'
-        }
-    });
-    return JSON.parse(response.text || '{}');
-}
-
-// Added missing exam related services
-// Fixed: Google GenAI initialization follows strict guidelines
-export async function generateExamQuestions(subject: string, chapter: string, examType: string, language: string[]): Promise<Question[]> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Generate an exam for Subject: ${subject}, Chapter: ${chapter}. Type: ${examType}. Languages requested: ${language.join(', ')}.`,
-        config: {
-            responseMimeType: "application/json",
-            systemInstruction: `You are an expert exam generator for the Pakistani curriculum. 
-            Generate 10 relevant questions. 
-            If MCQ, provide 4 options. 
-            The question text MUST be in all requested languages, separated by ' / '.
-            Return JSON: { "questions": [{ "question": "string", "type": "MCQ" | "SHORT" | "LONG", "options": ["string"] }] }`
-        }
-    });
     try {
-        const data = JSON.parse(response.text || '{"questions":[]}');
-        return data.questions || [];
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: PRIMARY_MODEL,
+                contents: `List 20 common English verbs starting with the letter ${initial}. Return as a JSON array of strings.`,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
+                }
+            });
+            return JSON.parse(response.text || "[]");
+        });
     } catch (e) {
         return [];
     }
 }
 
-// Fixed: Google GenAI initialization follows strict guidelines
-export async function evaluateExamAnswers(questions: Question[], userAnswers: UserAnswer[], studentInfo: any, examSetup: any): Promise<ExamReport> {
+export async function getVerbDetails(verb: string, language: string): Promise<any> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-        model: PRIMARY_MODEL,
-        contents: `Grade this exam for ${studentInfo.name}. 
-        Questions: ${JSON.stringify(questions)}. 
-        Student Answers: ${JSON.stringify(userAnswers)}. 
-        Context: ${examSetup.subject}, ${examSetup.chapter}.`,
-        config: {
-            responseMimeType: "application/json",
-            systemInstruction: `You are a strict but fair AI examiner. Evaluate the student's performance.
-            Provide detailed feedback for each question and an overall summary.
-            Return JSON matching the following structure exactly:
-            {
-                "results": {
-                    "marksObtained": number,
-                    "totalMarks": number,
-                    "percentage": number,
-                    "grade": "A+" | "A" | "B" | "C" | "D" | "F",
-                    "overallFeedback": "string",
-                    "breakdown": [{
-                        "question": "string",
-                        "userAnswer": "string",
-                        "modelAnswer": "string",
-                        "isCorrect": boolean,
-                        "feedback": "string"
-                    }]
+    try {
+        return await withStability(async () => {
+            const response = await ai.models.generateContent({
+                model: PRIMARY_MODEL,
+                contents: `Provide complete grammatical details for the verb "${verb}" in ${language}.`,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            base: { type: Type.STRING },
+                            past: { type: Type.STRING },
+                            pastParticiple: { type: Type.STRING },
+                            description: { type: Type.STRING },
+                            nounForm: { type: Type.STRING },
+                            adjectiveForm: { type: Type.STRING },
+                            usages: { type: Type.ARRAY, items: { type: Type.STRING } }
+                        }
+                    }
                 }
-            }`
-        }
+            });
+            return JSON.parse(response.text || "{}");
+        });
+    } catch (e) {
+        return null;
+    }
+}
+
+export async function* streamNotebookChatResponse(
+    prompt: string,
+    history: Message[],
+    language: string,
+    sources: NotebookSource[],
+    userEmail?: string | null,
+    userProfileNotes?: string
+): AsyncGenerator<{ text?: string, error?: string }> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    let sourceContext = "\n\n[NOTEBOOK SOURCES]\n";
+    sources.forEach(s => sourceContext += `Source: ${s.name}\nContent: ${s.content.substring(0, 5000)}\n\n`);
+
+    const sys = `You are a research assistant. Answer based on the notebook sources. Use [Source: filename]. Language: ${language}. ${GLOBAL_CAPABILITIES}${sourceContext}[USER MEMORY] ${userProfileNotes || 'None'}`;
+
+    const contents = history.filter(m => m.text && m.text.trim().length > 0).map(m => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
+    contents.push({ role: 'user', parts: [{ text: prompt }] });
+
+    try {
+        const response = await ai.models.generateContentStream({ model: PRIMARY_MODEL, contents, config: { systemInstruction: sys } });
+        for await (const chunk of response) { yield { text: chunk.text || "" }; }
+    } catch (err: any) { yield { error: err.message }; }
+}
+
+export async function generateNotebookOverview(sources: NotebookSource[], durationMinutes: number): Promise<string> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    let sourceContext = "";
+    sources.forEach(s => sourceContext += `Source: ${s.name}\nContent: ${s.content.substring(0, 3000)}\n\n`);
+    
+    const prompt = `Create an engaging ${durationMinutes}-minute audio overview script. Dynamic dialogue between Speaker1 (learner) and Speaker2 (expert).
+    Format:
+    Speaker1: ...
+    Speaker2: ...
+    
+    Sources: ${sourceContext}`;
+
+    return await withStability(async () => {
+        const response = await ai.models.generateContent({
+            model: PRO_MODEL,
+            contents: prompt,
+            config: { systemInstruction: "Expert educational scriptwriter." }
+        });
+        return response.text || "";
     });
-    const data = JSON.parse(response.text || '{"results": {}}');
-    return {
-        id: Date.now().toString(),
-        studentInfo,
-        examSetup,
-        results: data.results
-    };
+}
+
+export async function* streamVaultChatResponse(
+    prompt: string,
+    history: Message[],
+    language: string,
+    files: VaultFile[],
+    userEmail?: string | null,
+    userProfileNotes?: string
+): AsyncGenerator<{ text?: string, error?: string }> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    let sourceContext = "\n\n[VAULT FILES]\n";
+    files.forEach(f => sourceContext += `File: ${f.name}\nContent: ${f.content.substring(0, 5000)}\n\n`);
+
+    const sys = `Neural archivist. Provide technical insights. Language: ${language}. ${GLOBAL_CAPABILITIES}${sourceContext}[USER MEMORY] ${userProfileNotes || 'None'}`;
+
+    const contents = history.filter(m => m.text && m.text.trim().length > 0).map(m => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
+    contents.push({ role: 'user', parts: [{ text: prompt }] });
+
+    try {
+        const response = await ai.models.generateContentStream({ model: PRIMARY_MODEL, contents, config: { systemInstruction: sys } });
+        for await (const chunk of response) { yield { text: chunk.text || "" }; }
+    } catch (err: any) { yield { error: err.message }; }
 }
